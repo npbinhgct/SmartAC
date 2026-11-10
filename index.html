@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#1fbf9c">
+<title>SmartAir</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="application-name" content="SmartAir">
+<meta name="apple-mobile-web-app-title" content="SmartAir">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>
+:root{--bg:#f3f6f8;--card:#fff;--line:#e6ebef;--tx:#14213d;--mut:#7b8794;--acc:#1fbf9c;--acc2:#e7f8f3;--blue:#2f8cf0;--org:#f27b35;--red:#e5484d;--chip:#f4f6f8;--sh:0 1px 3px rgba(20,33,61,.06),0 6px 20px rgba(20,33,61,.05)}
+@media(prefers-color-scheme:dark){:root{--bg:#15191d;--card:#1f2429;--line:#2d343b;--tx:#e8edf2;--mut:#8b96a1;--acc2:#1d3a33;--chip:#272d33;--sh:none}}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--tx);-webkit-tap-highlight-color:transparent}
+@media(max-width:520px){#htm{display:none}}
+.head .st{margin-left:auto;align-self:flex-start;margin-top:6px;white-space:nowrap;font-size:13px;color:var(--mut);display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--acc);display:inline-block}
+.dot.off{background:var(--red)}
+main{max-width:1120px;margin:auto;padding:0 16px 40px}
+.head{display:flex;align-items:center;gap:14px;padding:22px 4px 6px}
+.head h1{margin:0;font-size:24px}
+.head small{color:var(--mut)}
+nav{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:12px 0 18px;overflow-x:auto}
+nav a{padding:11px 14px;color:var(--mut);text-decoration:none;font-size:15px;white-space:nowrap;border-bottom:2px solid transparent;cursor:pointer}
+nav a.on{color:var(--acc);border-color:var(--acc);font-weight:600}
+.pg{display:none}.pg.on{display:block}
+.pg.sl{animation:sl .22s ease-out}.pg.sr{animation:sr .22s ease-out}
+@keyframes sl{from{opacity:.3;transform:translateX(40px)}to{opacity:1;transform:none}}
+@keyframes sr{from{opacity:.3;transform:translateX(-40px)}to{opacity:1;transform:none}}
+.grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px;align-items:start}
+@media(max-width:820px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border-radius:16px;box-shadow:var(--sh);border:1px solid var(--line);margin-bottom:18px;overflow:hidden}
+.card>.in{padding:18px 20px}
+.card h3{margin:0;font-size:15px;display:flex;align-items:center;gap:8px}
+.card .hd{padding:15px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.cap{font-size:11.5px;letter-spacing:1.2px;color:var(--mut);font-weight:600;text-transform:uppercase;margin:18px 0 8px}
+.ac{position:relative;background:radial-gradient(circle at 85% 0,rgba(47,140,240,.13),transparent 55%),var(--card)}
+.sum{color:var(--blue);font-weight:600;font-size:16px;margin-top:3px}
+.pwr{position:absolute;right:20px;top:18px;width:50px;height:50px;border-radius:50%;border:0;background:var(--chip);color:var(--mut);cursor:pointer;display:grid;place-items:center;transition:.2s}
+.pwr.on{background:var(--acc);color:#fff;box-shadow:0 6px 18px rgba(31,191,156,.4)}
+.dial{position:relative;width:280px;margin:6px auto 0}
+.dial svg{display:block;width:100%}
+.dial .ctr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.ctr small{font-size:11.5px;letter-spacing:1.3px;color:var(--mut);font-weight:600}
+.ctr .big{font-size:72px;font-weight:300;line-height:1;margin:4px 0 6px}
+.ctr .big sup{font-size:22px;vertical-align:top;margin-left:2px}
+.pm{display:flex;justify-content:space-between;width:290px;margin:-34px auto 0}
+.rb{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--tx);font-size:24px;cursor:pointer;box-shadow:var(--sh)}
+.rb:disabled{opacity:.35}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:10px;border:1px solid var(--line);background:var(--chip);color:var(--tx);font-size:14.5px;cursor:pointer;transition:.15s}
+.chip svg{width:16px;height:16px}
+.chip.on{background:#e8f2fe;border-color:#a9cdf7;color:var(--blue)}
+.chip.fan.on{background:var(--acc);border-color:var(--acc);color:#fff}
+@media(prefers-color-scheme:dark){.chip.on{background:#1b3350;border-color:#2f5d93}}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:420px){.tiles{grid-template-columns:repeat(2,1fr)}}
+.tile{background:var(--chip);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.tile small{color:var(--mut);font-size:12.5px}
+.tile div{font-size:24px;font-weight:600;margin-top:6px}
+.tile div i{font-style:normal;font-size:13px;font-weight:400;color:var(--mut);margin-left:3px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 20px;border-top:1px solid var(--line)}
+.card .row:first-child{border-top:0}
+.row .t{font-weight:600;font-size:15px}
+.row .d{color:var(--mut);font-size:13px;margin-top:2px}
+.row .v{color:var(--mut);font-size:14px;text-align:right}
+.ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:none;font-size:17px;background:var(--acc2)}
+.sw{appearance:none;-webkit-appearance:none;width:44px;height:26px;border-radius:13px;background:#d5dce2;position:relative;cursor:pointer;flex:none;transition:.2s;margin:0}
+.sw:after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.sw:checked{background:var(--acc)}.sw:checked:after{left:21px}
+.btn{padding:9px 16px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--tx);font-size:14px;cursor:pointer}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
+.ban{display:none;margin:0 20px 16px;padding:11px 14px;border-radius:12px;background:#fff4e8;color:#9a4b12;font-size:14px;align-items:center;gap:10px}
+.sban{display:none;background:var(--red);color:#fff;padding:11px 18px;font-size:14.5px;align-items:center;gap:12px}
+.sban.on{display:flex}.sban .btn{margin-left:auto;white-space:nowrap}
+.ban.on{display:flex}.ban .btn{margin-left:auto;padding:6px 12px;white-space:nowrap}
+@media(prefers-color-scheme:dark){.ban{background:#3a2a1c;color:#f6c08f}}
+.f input[type=number],.f input[type=time],.f select{width:118px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--chip);color:var(--tx);font-size:14.5px;font-family:inherit}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px;align-items:start}
+.sgrid .card{margin:0}
+.save{position:sticky;bottom:0;display:flex;justify-content:flex-end;align-items:center;gap:12px;padding:14px 0;background:linear-gradient(transparent,var(--bg) 35%)}
+.log .row{justify-content:flex-start;align-items:flex-start}
+.log time{color:var(--acc);font-size:13.5px;font-weight:600;min-width:84px;padding-top:1px}
+.log .m{font-size:14.5px;flex:1}
+.lg{width:8px;height:8px;border-radius:50%;margin-top:7px;flex:none;background:var(--mut)}
+.chartw{position:relative;padding:8px 12px 4px}
+canvas{display:block;width:100%;height:320px}
+.tip{position:absolute;pointer-events:none;background:var(--tx);color:var(--card);font-size:13px;padding:7px 10px;border-radius:8px;display:none;white-space:nowrap}
+.seg{display:inline-flex;background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:3px;margin-left:auto}
+.seg a{padding:6px 12px;border-radius:8px;font-size:13.5px;cursor:pointer;color:var(--mut)}
+.seg a.on{background:var(--acc);color:#fff}
+.lgd{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--mut);padding:0 20px 16px}
+.lgd i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+.ov{position:fixed;inset:0;background:rgba(10,15,25,.55);display:none;align-items:center;justify-content:center;z-index:8;padding:16px}
+.ov.on{display:flex}.ov .card{max-width:440px;width:100%;margin:0}
+.ov label{display:block;margin:14px 0 4px;font-size:14px;font-weight:600}
+.ov input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--chip);color:var(--tx);font-size:15px;font-family:inherit}
+.mono{font-family:ui-monospace,Consolas,monospace;font-size:13px;word-break:break-all}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(80px);background:var(--tx);color:var(--card);padding:11px 18px;border-radius:12px;font-size:14px;transition:.25s;z-index:9}
+#toast.on{transform:translateX(-50%)}
+</style></head><body>
+<div class="sban" id="sban">⚠ <span><b>Chế độ an toàn:</b> ESP32 lỗi nhiều lần liên tiếp nên đã tắt BLE và tự động. Xem tab ESP32 → Sự cố gần nhất.</span><button class="btn" id="normal">Chạy lại bình thường</button></div>
+<main>
+<div class="head"><svg width="46" height="46" viewBox="0 0 46 46"><rect x="3" y="16" width="26" height="22" rx="3" fill="#f4a6b8"/><rect x="3" y="27" width="26" height="11" rx="2" fill="#c96b84"/><rect x="31" y="22" width="12" height="16" rx="2" fill="none" stroke="#7b8794" stroke-width="2"/><rect x="9" y="3" width="16" height="9" rx="2" fill="#a7e9d8" stroke="#1fbf9c" stroke-width="1.5"/></svg>
+<div><h1>Phòng ngủ</h1><small><span id="hsrc">--</span></small></div><span class="st"><span class="dot" id="hdot"></span><span id="htx">Đang kết nối…</span></span></div>
+<nav id="nav"><a data-p="ctl">Điều khiển</a><a data-p="his">Lịch sử</a><a data-p="log">Nhật ký</a><a data-p="set">Cài đặt</a><a data-p="sys">ESP32</a></nav>
+
+<section class="pg" id="p-ctl"><div class="grid">
+<div>
+ <div class="card ac"><div class="in">
+  <div class="cap" style="margin-top:0">Máy lạnh</div>
+  <div class="sum" id="sum">--</div>
+  <button class="pwr" id="pwr" title="Bật / tắt"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></svg></button>
+  <div class="dial"><svg viewBox="0 0 240 240"><circle cx="120" cy="120" r="96" fill="none" stroke="var(--line)" stroke-width="14" stroke-linecap="round" stroke-dasharray="452.4 603.2" transform="rotate(135 120 120)"/>
+   <circle id="arc" cx="120" cy="120" r="96" fill="none" stroke="url(#gr)" stroke-width="14" stroke-linecap="round" stroke-dasharray="0 603.2" transform="rotate(135 120 120)" style="transition:.4s"/>
+   <circle id="knob" r="11" fill="#fff" stroke="var(--blue)" stroke-width="4" cx="0" cy="0" style="transition:.4s"/>
+   <defs><linearGradient id="gr" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#5aa9f7"/><stop offset="1" stop-color="#2f8cf0"/></linearGradient></defs></svg>
+   <div class="ctr"><small id="dlab">ĐẶT NHIỆT ĐỘ</small><div class="big"><span id="tset">--</span><sup>°C</sup></div><span style="color:var(--mut)">Phòng <span id="tnow">--</span>°C</span></div></div>
+  <div class="pm"><button class="rb" id="tm">−</button><button class="rb" id="tp">+</button></div>
+  <div class="cap">Chế độ</div><div class="chips" id="modes"></div>
+  <div class="cap">Quạt</div><div class="chips" id="fans"></div>
+ </div></div>
+</div>
+<div>
+ <div class="card"><div class="in"><div class="tiles">
+  <div class="tile"><small>🌡 Nhiệt độ</small><div id="vt">--<i>°C</i></div></div>
+  <div class="tile"><small>💧 Độ ẩm</small><div id="vh">--<i>%</i></div></div>
+  <div class="tile"><small>☀ Cảm nhận</small><div id="vf">--<i>°C</i></div></div>
+  <div class="tile"><small>🌫 Điểm sương</small><div id="vd">--<i>°C</i></div></div>
+  <div class="tile"><small>🔋 Pin nhiệt kế</small><div id="vb">--<i>%</i></div></div>
+  <div class="tile"><small>◎ Sensibo đo</small><div id="vss" style="font-size:17px">--</div></div>
+ </div></div></div>
+ <div class="card"><div class="hd"><h3>⚙ Tự động</h3><input type="checkbox" class="sw" id="qAuto" style="margin-left:auto"></div>
+  <div class="row"><div><div class="t" id="rsn">--</div><div class="d">Quyết định hiện tại của bộ điều khiển</div></div></div>
+  <div class="ban" id="ban">⏸ <span id="bantx">Đang tạm dừng do chỉnh tay</span><button class="btn" id="resume">Chạy lại</button></div>
+ </div>
+ <div class="card">
+  <div class="row"><div class="ic">🏠</div><div style="flex:1"><div class="t">Vắng nhà</div><div class="d">Tắt máy, chỉ hút ẩm khi phòng quá ẩm</div></div><input type="checkbox" class="sw" id="qAway"></div>
+  <div class="row"><div class="ic">🍃</div><div style="flex:1"><div class="t">Chống mốc</div><div class="d">Chạy quạt cho khô dàn lạnh trước khi tắt</div></div><input type="checkbox" class="sw" id="qMold"></div>
+  <div class="row"><div class="ic">🌙</div><div style="flex:1"><div class="t">Chế độ ngủ</div><div class="d">Tăng dần nhiệt độ đặt trong đêm cho đỡ lạnh, đỡ tốn điện</div></div><input type="checkbox" class="sw" id="qSleep"></div>
+ </div>
+</div></div></section>
+
+<section class="pg" id="p-his">
+ <div class="card"><div class="hd"><h3>📈 Nhiệt độ &amp; độ ẩm</h3><div class="seg" id="rng"><a data-h="6">6 giờ</a><a data-h="24" class="on">24 giờ</a></div></div>
+  <div class="in" style="padding-bottom:4px"><div class="tiles" id="hst"></div></div>
+  <div class="chartw"><canvas id="cv"></canvas><div class="tip" id="tip"></div></div>
+  <div class="lgd"><span><i style="background:var(--org)"></i>Nhiệt độ</span><span><i style="background:var(--blue)"></i>Độ ẩm</span><span><i style="background:rgba(47,140,240,.18)"></i>COOL</span><span><i style="background:rgba(31,191,156,.22)"></i>DRY</span><span><i style="background:rgba(123,135,148,.2)"></i>FAN</span></div>
+ </div>
+ <small style="color:var(--mut)">Lịch sử và nhật ký được lưu vào flash của ESP32, không mất khi mất điện.</small>
+</section>
+
+<section class="pg" id="p-log"><div class="card log" id="log"></div></section>
+
+<section class="pg f" id="p-set">
+<div class="sgrid">
+ <div class="card"><div class="hd"><h3>🕙 Khung giờ</h3></div>
+  <div class="row"><div><div class="t">Tự động</div><div class="d">Công tắc tổng</div></div><input type="checkbox" class="sw" id="autoOn"></div>
+  <div class="row"><div class="t">Giờ bật</div><input type="time" id="winStart"></div>
+  <div class="row"><div class="t">Giờ tắt</div><input type="time" id="winEnd"></div></div>
+ <div class="card"><div class="hd"><h3>❄ Làm lạnh</h3></div>
+  <div class="row"><div class="t">Nhiệt độ đặt (°C)</div><input type="number" id="coolTemp" min="16" max="30"></div>
+  <div class="row"><div class="t">Quạt</div><select id="coolFan"></select></div></div>
+ <div class="card"><div class="hd"><h3>💧 Hút ẩm</h3></div>
+  <div class="row"><div><div class="t">Theo điểm sương</div><div class="d">Đo đúng lượng hơi nước, khớp cảm giác oi bức hơn độ ẩm %</div></div><input type="checkbox" class="sw" id="dryByDew"></div>
+  <div class="row dew"><div><div class="t">Chuyển DRY khi điểm sương ≥ (°C)</div><div class="d">≥ 21 oi, ≥ 24 rất oi</div></div><input type="number" id="dewOn" min="15" max="26"></div>
+  <div class="row dew"><div class="t">Về COOL khi điểm sương ≤ (°C)</div><input type="number" id="dewOff" min="12" max="25"></div>
+  <div class="row rh"><div class="t">Chuyển DRY khi độ ẩm ≥ (%)</div><input type="number" id="dryOn" min="40" max="95"></div>
+  <div class="row rh"><div class="t">Về COOL khi độ ẩm ≤ (%)</div><input type="number" id="dryOff" min="30" max="90"></div>
+  <div class="row"><div class="t">Quạt</div><select id="dryFan"></select></div></div>
+ <div class="card"><div class="hd"><h3>🌙 Chế độ ngủ</h3></div>
+  <div class="row"><div><div class="t">Bật chế độ ngủ</div><div class="d">Ngủ được 2 giờ: +1°C · 1 giờ 30 trước giờ dậy: +1°C nữa (tối đa 30°C)</div></div><input type="checkbox" class="sw" id="sleepOn"></div>
+  <div class="row"><div class="t">Giờ đi ngủ</div><input type="time" id="sleepStart"></div>
+  <div class="row"><div class="t">Giờ dậy</div><input type="time" id="sleepEnd"></div></div>
+ <div class="card"><div class="hd"><h3>🍃 Chống mốc</h3></div>
+  <div class="row"><div class="t">Chạy quạt trước khi tắt</div><input type="checkbox" class="sw" id="moldOn"></div>
+  <div class="row"><div class="t">Số phút chạy quạt</div><input type="number" id="moldMin" min="5" max="60"></div></div>
+ <div class="card"><div class="hd"><h3>🏠 Vắng nhà</h3></div>
+  <div class="row"><div class="t">Đang vắng nhà</div><input type="checkbox" class="sw" id="away"></div>
+  <div class="row"><div class="t">Hút ẩm khi quá ẩm</div><input type="checkbox" class="sw" id="awayDry"></div>
+  <div class="row"><div class="t">Hút ẩm khi độ ẩm ≥ (%)</div><input type="number" id="awayDryOn" min="50" max="95"></div></div>
+ <div class="card"><div class="hd"><h3>🛠 Nâng cao</h3></div>
+  <div class="row"><div><div class="t">Tạm dừng khi chỉnh tay (phút)</div><div class="d">0 = không tạm dừng</div></div><input type="number" id="pauseMin" min="0" max="600"></div>
+  <div class="row"><div class="t">Khoảng cách giữa 2 lệnh (phút)</div><input type="number" id="gapMin" min="1" max="30"></div></div>
+</div>
+<div class="save"><span id="msg" style="color:var(--mut)"></span><button class="btn pri" id="saveb">Lưu cài đặt</button></div>
+</section>
+
+<section class="pg" id="p-sys">
+ <div class="card"><div class="in"><div class="tiles" id="sysT"></div></div></div>
+ <div class="card" id="sysR"></div>
+ <div class="card" id="sysP"></div>
+ <div class="card" id="sysC"></div>
+ <div class="card" id="sysL"></div>
+ <small style="color:var(--mut)">Thử cơ chế báo lỗi: cắm USB, mở Serial Monitor (115200), gõ <b>CRASHTEST</b> (cố ý lỗi) hoặc <b>TREOTEST</b> (cố ý treo, chờ watchdog 60 giây).</small>
+</section>
+</main>
+<div class="ov" id="setup"><div class="card"><div class="in">
+ <h3>🔐 Kết nối SmartAir từ xa</h3>
+ <small style="color:var(--mut)">Nhập một lần trên điện thoại này. Thông tin chỉ lưu trong trình duyệt của máy này, không gửi đi đâu khác.</small>
+ <label for="sPass">Mật khẩu MQTT (tài khoản <b>phone</b> trên EMQX)</label><input type="password" id="sPass" autocomplete="current-password">
+ <label for="sKey">Khóa ghép (64 ký tự)</label><input id="sKey" class="mono" autocomplete="off" spellcheck="false">
+ <small style="color:var(--mut)">Lấy ở trang ESP32 trong nhà: mở http://&lt;IP ESP32&gt; → tab ESP32 → Điều khiển từ xa → Hiện khóa ghép.</small>
+ <div id="sMsg" style="color:var(--red);font-size:14px;margin-top:10px"></div>
+ <div style="text-align:right;margin-top:14px"><button class="btn pri" id="sSave">Kết nối</button></div>
+</div></div></div>
+<div id="toast"></div>
+<script>
+const $=i=>document.getElementById(i),T_MIN=26,T_MAX=30;
+const MODES={cool:'Làm lạnh',dry:'Hút ẩm',fan:'Quạt',auto:'Tự động',heat:'Sưởi'};
+const MI={cool:'<path d="M12 2v20M4 6l16 12M20 6L4 18"/>',dry:'<path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/>',fan:'<circle cx="12" cy="12" r="2"/><path d="M12 10c0-5 4-7 5-4s-3 4-5 4M14 12c5 0 7 4 4 5s-4-3-4-5M12 14c0 5-4 7-5 4s3-4 5-4M10 12c-5 0-7-4-4-5s4 3 4 5"/>',auto:'<circle cx="12" cy="12" r="9"/><path d="M9 16l3-8 3 8M10 13.5h4"/>',heat:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>'};
+const FANS={quiet:'Êm',low:'Thấp',medium_low:'Vừa-thấp',medium:'Vừa',medium_high:'Vừa-cao',high:'Cao',strong:'Mạnh',auto:'Tự động'};
+const K=['autoOn','winStart','winEnd','coolTemp','coolFan','dryByDew','dewOn','dewOff','dryOn','dryOff','dryFan','sleepOn','sleepStart','sleepEnd','moldOn','moldMin','away','awayDry','awayDryOn','pauseMin','gapMin'];
+let S={fans:{}},C={},H=null,hrs=24,busy=0,pendT=null,tmr=null;
+// ---- Đường truyền: trong nhà gọi thẳng ESP32 (http); từ xa (GitHub Pages, https) đi qua MQTT ----
+const QS=new URLSearchParams(location.search),MQ_HOST='m261101e.ala.asia-southeast1.emqxsl.com';
+const MQ=location.protocol=='https:'||QS.has('mqurl'),MQ_URL=QS.get('mqurl')||'wss://'+MQ_HOST+':8084/mqtt';
+const OPS={'GET /api/status':'status','GET /api/settings':'settings','POST /api/settings':'setSettings','POST /api/cmd':'cmd',
+ 'POST /api/resume':'resume','GET /api/history':'history','GET /api/log':'log','GET /api/sys':'sys','POST /api/normal':'normal','POST /api/crashclear':'crashclear'};
+let mqc=null,mqStat=null,mqOn=null,pend={},booted=false;
+const cfgGet=()=>{try{return JSON.parse(localStorage.getItem('smartair')||'{}')}catch(e){return {}}};
+class Res{constructor(c,b){this.status=c;this.ok=c>=200&&c<300;this.b=b}async text(){return this.b}async json(){return JSON.parse(this.b)}}
+const hex=b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+async function sign(keyHex,msg){const k=await crypto.subtle.importKey('raw',new Uint8Array(keyHex.match(/../g).map(h=>parseInt(h,16))),{name:'HMAC',hash:'SHA-256'},false,['sign']);
+ return hex(await crypto.subtle.sign('HMAC',k,new TextEncoder().encode(msg)))}
+function showSetup(msg){const c=cfgGet();$('sPass').value=c.pass||'';$('sKey').value=c.key||'';$('sMsg').textContent=msg||'';$('setup').classList.add('on')}
+function mqConnect(){const c=cfgGet();if(!c.pass||!c.key){showSetup();return}
+ if(mqc)mqc.end(true);
+ mqc=mqtt.connect(MQ_URL,{username:'phone',password:c.pass,clientId:'smartair-phone-'+hex(crypto.getRandomValues(new Uint8Array(4))),
+  clean:true,reconnectPeriod:5000,connectTimeout:10000,keepalive:60});
+ mqc.on('connect',()=>{$('setup').classList.remove('on');mqc.subscribe(['smartair/esp/status','smartair/esp/online','smartair/esp/resp/#']);
+  mqReq('watch','');if(!booted){booted=true;boot()}});
+ mqc.on('message',(t,p)=>{const s=p.toString();
+  if(t=='smartair/esp/status'){mqStat=s;st()}else if(t=='smartair/esp/online'){mqOn=s=='1';st()}
+  else if(t.startsWith('smartair/esp/resp/')){const q=t.split('/'),r=pend[q[3]];if(r){delete pend[q[3]];r(new Res(+q[4],s))}}});
+ mqc.on('error',e=>{if(/auth|authori[sz]ed|bad user|password/i.test(e.message)){mqc.end(true);showSetup('Máy chủ từ chối: sai mật khẩu MQTT')}});
+ mqc.on('offline',()=>st());
+}
+async function mqReq(op,body){const c=cfgGet();if(!mqc||!mqc.connected)return new Res(503,'Chưa kết nối được máy chủ MQTT');
+ const id=hex(crypto.getRandomValues(new Uint8Array(8))),ts=Math.floor(Date.now()/1000),sig=await sign(c.key,id+'\n'+ts+'\n'+op+'\n'+body);
+ return new Promise(res=>{pend[id]=res;mqc.publish('smartair/phone/req',JSON.stringify({id,ts,op,body,sig}));
+  setTimeout(()=>{if(pend[id]){delete pend[id];res(new Res(504,'ESP32 không trả lời (mất mạng, hoặc khóa ghép sai)'))}},20000)})}
+async function api(method,url,body){if(!MQ)return fetch(url,method=='GET'?undefined:{method,body});
+ if(url=='/api/status'&&mqStat)return new Res(200,mqStat);   // trạng thái do ESP32 tự gửi, không tốn lượt hỏi
+ return mqReq(OPS[method+' '+url],body||'')}
+$('sSave').onclick=()=>{const pass=$('sPass').value,key=$('sKey').value.trim().toLowerCase();
+ if(!pass){$('sMsg').textContent='Chưa nhập mật khẩu MQTT';return}
+ if(!/^[0-9a-f]{64}$/.test(key)){$('sMsg').textContent='Khóa ghép phải đúng 64 ký tự 0-9, a-f';return}
+ localStorage.setItem('smartair',JSON.stringify({pass,key}));$('sMsg').textContent='Đang kết nối…';mqConnect()};
+const j=async u=>(await api('GET',u)).json();
+function toast(t,ms){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);if(ms!==0)e._t=setTimeout(()=>e.classList.remove('on'),ms||2200)}
+async function post(u,o){return api('POST',u,JSON.stringify(o))}
+async function cmd(o){busy++;toast('Đang gửi lệnh tới Sensibo…',0);
+ try{const r=await post('/api/cmd',o);toast(r.ok?'Đã gửi · tự động tạm dừng':'Lỗi: '+await r.text(),r.ok?2200:4000)}catch(e){toast('Không kết nối được ESP32',4000)}
+ busy--;st();lg()}
+async function quick(k,v){C[k]=v;const r=await post('/api/settings',{[k]:v});toast(r.ok?'Đã lưu':'Lỗi lưu');C=await r.json().catch(()=>C);fillSet();st()}
+const f1=v=>v==null?'--':(+v).toFixed(1),f0=v=>v==null?'--':Math.round(v);
+function setDial(t){const f=Math.max(0,Math.min(1,(t-T_MIN)/(T_MAX-T_MIN)));$('arc').setAttribute('stroke-dasharray',(452.4*f)+' 603.2');
+ const a=(135+270*f)*Math.PI/180;$('knob').setAttribute('cx',120+96*Math.cos(a));$('knob').setAttribute('cy',120+96*Math.sin(a))}
+function chips(el,list,cur,lab,cls,click){const k=list.join()+'|'+cur;if(el._k==k)return;el._k=k;
+ el.innerHTML=list.map(m=>'<button class="chip '+cls+(m==cur?' on':'')+'" data-v="'+m+'">'+(MI[m]&&cls!='fan'?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+MI[m]+'</svg>':'')+(lab[m]||m)+'</button>').join('');
+ el.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{el.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x==b));click(b.dataset.v)})}
+async function st(){let s;try{s=S=await j('/api/status')}catch(e){$('hdot').className='dot off';
+ $('htx').textContent=!MQ?'Mất kết nối ESP32':!mqc||!mqc.connected?'Đang kết nối máy chủ…':mqOn===false?'ESP32 ngoại tuyến':'Đang chờ ESP32…';return}
+ $('sban').classList.toggle('on',!!s.safeMode);$('hdot').className='dot'+(s.acOk?'':' off');$('htx').innerHTML=(s.limitSec>0?'Sensibo giới hạn · chờ '+s.limitSec+'s':s.acOk?'Trực tuyến':'Chưa đọc được Sensibo')+'<span id="htm"> · '+s.time+'</span>';if(s.limitSec>0)$('hdot').className='dot off';
+ if(MQ){const off=!mqc||!mqc.connected||mqOn===false;$('htx').innerHTML=(off?'ESP32 ngoại tuyến · số liệu lúc '+s.time:'Từ xa · trực tuyến<span id="htm"> · '+s.time+'</span>');if(off)$('hdot').className='dot off'}
+ $('hsrc').textContent=(s.acOk?(s.acOn?'Đang chạy · ':'Đang tắt · '):'')+'Nguồn đo '+s.src;
+ $('vt').innerHTML=f1(s.t)+'<i>°C</i>';$('vh').innerHTML=f0(s.rh)+'<i>%</i>';$('vf').innerHTML=f1(s.feels)+'<i>°C</i>';
+ $('vd').innerHTML=f1(s.dew)+'<i>°C</i>';$('vb').innerHTML=(s.batt>=0?s.batt:'--')+'<i>%</i>';$('vss').textContent=f1(s.sensiboT)+'° · '+f0(s.sensiboRh)+'%';
+ $('tnow').textContent=f1(s.t);
+ const on=s.acOn,m=s.acMode,noT=m=='fan'||!s.acOk;
+ $('sum').textContent=s.acOk?(on?(MODES[m]||m)+(noT?'':' · '+s.acTemp+'°C')+' · quạt '+(FANS[s.acFan]||s.acFan):'Đang tắt'):'Chưa đọc được Sensibo';
+ $('pwr').classList.toggle('on',!!on);
+ if(pendT==null){$('tset').textContent=noT?'--':s.acTemp;setDial(noT?T_MIN:s.acTemp)}
+ $('dlab').textContent=m=='dry'?'HÚT ẨM':m=='fan'?'CHỈ QUẠT':'LÀM LẠNH ĐẾN';
+ $('tm').disabled=$('tp').disabled=noT;
+ const ml=Object.keys(MODES).filter(k=>s.fans[k]);
+ chips($('modes'),ml.length?ml:['cool','dry','fan'],on?m:'',MODES,'',v=>cmd({on:true,mode:v}));
+ chips($('fans'),s.fans[m]||[],s.acFan,FANS,'fan',v=>cmd({on:true,fan:v}));
+ $('rsn').textContent=s.mold?'Đang chạy quạt chống mốc':s.paused?'Tự động đang tạm dừng':s.reason;
+ $('ban').classList.toggle('on',!!s.paused);if(s.paused)$('bantx').textContent=s.reason;}
+function bump(d){const b=pendT!=null?pendT:S.acTemp;pendT=Math.max(T_MIN,Math.min(T_MAX,b+d));$('tset').textContent=pendT;setDial(pendT);
+ clearTimeout(tmr);tmr=setTimeout(async()=>{const t=pendT;await cmd({on:true,temp:t});pendT=null;st()},1200)}
+$('tm').onclick=()=>bump(-1);$('tp').onclick=()=>bump(1);
+$('normal').onclick=async()=>{toast('Đang khởi động lại ESP32…',6000);try{await post('/api/normal',{})}catch(e){}setTimeout(()=>location.reload(),8000)};
+$('pwr').onclick=()=>cmd({on:!S.acOn});
+$('resume').onclick=async()=>{await post('/api/resume',{});toast('Đã chạy tự động lại');st();lg()};
+[['qAuto','autoOn'],['qAway','away'],['qMold','moldOn'],['qSleep','sleepOn']].forEach(([q,k])=>$(q).onchange=e=>quick(k,e.target.checked));
+function opt(e,list,v){const w=[''].concat(list||[]);if(v&&!w.includes(v))w.push(v);e.innerHTML=w.map(f=>'<option value="'+f+'">'+(f?FANS[f]||f:'Giữ nguyên')+'</option>').join('');e.value=v}
+function fillSet(){opt($('coolFan'),S.fans.cool,C.coolFan);opt($('dryFan'),S.fans.dry,C.dryFan);
+ K.forEach(k=>{const e=$(k);if(e.type=='checkbox')e.checked=C[k];else e.value=C[k]});
+ $('qAuto').checked=C.autoOn;$('qAway').checked=C.away;$('qMold').checked=C.moldOn;$('qSleep').checked=C.sleepOn;dewVis()}
+function dewVis(){const d=$('dryByDew').checked;document.querySelectorAll('.row.dew').forEach(e=>e.style.display=d?'':'none');document.querySelectorAll('.row.rh').forEach(e=>e.style.display=d?'none':'')}
+$('dryByDew').addEventListener('change',dewVis);
+async function load(){C=await j('/api/settings');fillSet()}
+$('saveb').onclick=async()=>{const o={};K.forEach(k=>{const e=$(k);o[k]=e.type=='checkbox'?e.checked:(e.type=='number'?+e.value:e.value)});
+ const r=await post('/api/settings',o);$('msg').textContent=r.ok?'Đã lưu ✓':'Lỗi';if(r.ok){C=await r.json();fillSet()}setTimeout(()=>$('msg').textContent='',3000);lg()};
+const p2=n=>String(n).padStart(2,'0');
+function tsS(ts,full){if(ts<1600000000)return '+'+ts+'s';const d=new Date(ts*1000);return p2(d.getHours())+':'+p2(d.getMinutes())+(full?' · '+p2(d.getDate())+'/'+p2(d.getMonth()+1):'')}
+function lc(m){return /Lỗi|Mất|Treo|SỰ CỐ|QUÁ NHIỆT|AN TOÀN/.test(m)?'var(--red)':/nóng|Thử|CRASHTEST|TREOTEST/.test(m)?'var(--org)':/chỉnh tay|Lệnh tay/.test(m)?'var(--org)':/Tự động/.test(m)?'var(--acc)':'var(--mut)'}
+async function lg(){const a=await j('/api/log');const today=new Date().toDateString();
+ $('log').innerHTML=a.reverse().map(i=>'<div class="row"><time>'+tsS(i.ts,i.ts>1600000000&&new Date(i.ts*1000).toDateString()!=today)+'</time><span class="lg" style="background:'+lc(i.msg)+'"></span><span class="m">'+i.msg.replace(/</g,'&lt;')+'</span></div>').join('')||'<div class="row"><span class="m" style="color:var(--mut)">Chưa có sự kiện</span></div>'}
+function css(v){return getComputedStyle(document.body).getPropertyValue(v).trim()}
+function draw(hx){const cv=$('cv'),r=cv.getBoundingClientRect(),dp=devicePixelRatio||1;cv.width=r.width*dp;cv.height=r.height*dp;
+ const g=cv.getContext('2d');g.scale(dp,dp);const W=r.width,Hh=r.height,L=40,R=40,T=12,B=26;g.font='12px system-ui';
+ const now=Date.now()/1000,x0=now-hrs*3600,P=(H?H.pts:[]).filter(p=>p[0]>=x0-H.step);
+ if(P.length<2){g.fillStyle=css('--mut');g.textAlign='center';g.fillText('Chưa đủ dữ liệu · mỗi 5 phút ghi 1 điểm',W/2,Hh/2);$('hst').innerHTML='';return}
+ const X=ts=>L+(ts-x0)/(hrs*3600)*(W-L-R);let tn=Math.min(...P.map(p=>p[1])),tx=Math.max(...P.map(p=>p[1]));tn=Math.floor(tn-.5);tx=Math.ceil(tx+.5);
+ const Yt=v=>T+(tx-v)/(tx-tn)*(Hh-T-B),Yh=v=>T+(100-v)/100*(Hh-T-B),bg=['rgba(47,140,240,.15)','rgba(31,191,156,.2)','rgba(123,135,148,.18)','rgba(123,135,148,.1)'];
+ let s0=null;P.forEach((p,i)=>{const n=P[i+1],k=p[3]&1?(p[3]>>1)&3:-1,kn=n&&n[3]&1?(n[3]>>1)&3:-2;if(k<0)return;if(s0==null)s0=p[0];
+  if(!n||kn!=k||n[0]-p[0]>H.step*3){const a=Math.max(L,X(s0));g.fillStyle=bg[k];g.fillRect(a,T,Math.max(2,X(n&&n[0]-p[0]<=H.step*3?n[0]:p[0]+H.step)-a),Hh-T-B);s0=null}});
+ g.strokeStyle=css('--line');g.fillStyle=css('--mut');g.lineWidth=1;
+ for(let k=0;k<=4;k++){const y=T+k*(Hh-T-B)/4;g.beginPath();g.moveTo(L,y);g.lineTo(W-R,y);g.stroke();g.textAlign='right';g.fillText((tx-k*(tx-tn)/4).toFixed(1)+'°',L-6,y+4);g.textAlign='left';g.fillText((100-k*25)+'%',W-R+6,y+4)}
+ g.textAlign='center';const st=hrs==6?1:4;for(let k=0;k<=hrs;k+=st){const ts=x0+k*3600;g.fillText(tsS(ts),X(ts),Hh-6)}
+ const line=(f,c)=>{g.strokeStyle=c;g.lineWidth=2.2;g.lineJoin='round';g.beginPath();let pv=0;P.forEach(p=>{const x=X(p[0]),y=f(p);if(pv&&p[0]-pv<H.step*3)g.lineTo(x,y);else g.moveTo(x,y);pv=p[0]});g.stroke()};
+ line(p=>Yt(p[1]),css('--org'));line(p=>Yh(p[2]),css('--blue'));
+ if(hx!=null){let b=P[0];P.forEach(p=>{if(Math.abs(X(p[0])-hx)<Math.abs(X(b[0])-hx))b=p});const x=X(b[0]);
+  g.strokeStyle=css('--mut');g.setLineDash([3,3]);g.beginPath();g.moveTo(x,T);g.lineTo(x,Hh-B);g.stroke();g.setLineDash([]);
+  [[Yt(b[1]),css('--org')],[Yh(b[2]),css('--blue')]].forEach(([y,c])=>{g.fillStyle=c;g.beginPath();g.arc(x,y,4,0,7);g.fill()});
+  const tp=$('tip');tp.style.display='block';tp.innerHTML=tsS(b[0])+' · 🌡 '+b[1]+'° · 💧 '+b[2]+'%'+(b[3]&1?' · '+(['COOL','DRY','FAN','BẬT'][(b[3]>>1)&3]):' · tắt');
+  tp.style.left=Math.min(Math.max(0,x-tp.offsetWidth/2+12),W-tp.offsetWidth+12)+'px';tp.style.top='0px'}else $('tip').style.display='none';
+ const on=P.filter(p=>p[3]&1).length*H.step/3600,mn=a=>Math.min(...a),mx=a=>Math.max(...a),tt=P.map(p=>p[1]),hh=P.map(p=>p[2]);
+ $('hst').innerHTML='<div class="tile"><small>🌡 Nhiệt độ</small><div>'+mn(tt)+'–'+mx(tt)+'<i>°C</i></div></div><div class="tile"><small>💧 Độ ẩm</small><div>'+mn(hh)+'–'+mx(hh)+'<i>%</i></div></div><div class="tile"><small>⏱ Máy chạy</small><div>'+on.toFixed(1)+'<i>giờ</i></div></div>'}
+async function hist(){H=await j('/api/history');if($('p-his').classList.contains('on'))draw()}
+const cvE=$('cv'),mv=e=>{const r=cvE.getBoundingClientRect(),x=(e.touches?e.touches[0]:e).clientX-r.left;draw(x)};
+cvE.onmousemove=mv;cvE.ontouchmove=e=>{mv(e)};cvE.ontouchstart=mv;cvE.onmouseleave=()=>draw();
+$('rng').querySelectorAll('a').forEach(a=>a.onclick=()=>{$('rng').querySelectorAll('a').forEach(x=>x.classList.toggle('on',x==a));hrs=+a.dataset.h;draw()});
+const dur=s=>{const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);return (d?d+' ngày ':'')+h+' giờ '+m+' phút'};
+async function sys(){const s=await j('/api/sys'),kb=v=>Math.round(v/1024)+' KB',ago=v=>v<0?'chưa có':v+' giây trước';
+ const tl=[['🌡 Nhiệt độ chip',s.chipTemp.toFixed(1),'°C'],['🧠 RAM trống',Math.round(s.heapFree/1024),'KB'],['📶 WiFi',s.rssi,'dBm'],['⏱ Đã chạy',dur(s.uptime).replace(/ phút$/,'p').replace(/ giờ /,'g ').replace(/ ngày /,'n '),''],['🔄 Khởi động',s.boots,'lần'],['⚠ Treo / lỗi',s.crashes,'lần']];
+ $('sysT').innerHTML=tl.map(t=>'<div class="tile"><small>'+t[0]+'</small><div'+(t[0].includes('Treo')&&s.crashes?' style="color:var(--red)"':'')+'>'+t[1]+'<i>'+t[2]+'</i></div></div>').join('');
+ const r=[['Chip',s.chip+' · '+s.cpuMHz+' MHz'],['RAM trống / tổng',kb(s.heapFree)+' / '+kb(s.heapTotal)],['RAM trống thấp nhất',kb(s.heapMin)],['Khối RAM liền lớn nhất',kb(s.heapBlock)],
+  ['Flash',s.flashMB+' MB · code '+kb(s.sketch)+' · trống '+kb(s.sketchFree)],['Thời gian chạy',dur(s.uptime)],['Lý do khởi động gần nhất',s.resetReason],['Vòng lặp lâu nhất',s.loopMaxMs+' ms'],['Stack vòng lặp còn trống',s.stackFree+' byte'+(s.stackFree<2048?' ⚠':'')],
+  ['WiFi',s.ssid+' · kênh '+s.channel+' · '+s.rssi+' dBm'],['Địa chỉ IP',s.ip],['MAC',s.mac],['Số lần mất WiFi',s.wifiDrops],
+  ['Sensibo: gọi OK / lỗi',s.sensiboOk+' / '+s.sensiboErr+' · mã gần nhất '+s.sensiboCode],['Sensibo OK gần nhất',ago(s.sensiboAgo)],['Đã đọc mức quạt',s.capsOk?'Có':'Chưa'],
+  ['CGDK2: số gói nhận',s.blePackets],['CGDK2 gần nhất',ago(s.bleAgo)],['Bộ nhớ lưu (flash)',s.fsOk?kb(s.fsUsed)+' / '+kb(s.fsTotal):'Lỗi – chỉ lưu trong RAM'],['Bản firmware',s.build]];
+ const row=x=>'<div class="row"><span>'+x[0]+'</span><span class="v">'+x[1]+'</span></div>',f1=v=>v==null?'--':(+v).toFixed(1);
+ const mode=s.safeMode?'<b style="color:var(--red)">Chế độ an toàn</b>':s.tempWarm?'<b style="color:var(--org)">Chip nóng – đang hạ CPU '+s.cpuNow+' MHz</b>':'<b style="color:var(--acc)">Bình thường ✓</b>';
+ $('sysP').innerHTML='<div class="hd"><h3>🛡 Bảo vệ</h3></div>'+[['Trạng thái',mode],['Lỗi / treo liên tiếp',s.streak+' lần (từ 3 lần → chế độ an toàn)'],['Đang làm',s.step],['RAM thấp nhất xảy ra lúc',s.heapMinStep+' ('+kb(s.heapMin)+')'],
+  ['Nhiệt độ chip cao nhất',f1(s.tempMaxRun)+' °C lần chạy này · '+f1(s.tempMaxAll)+' °C từ trước tới nay'],['Ngưỡng nhiệt','≥ '+s.tempWarmC+' °C hạ CPU · ≥ '+s.tempHotC+' °C ngủ 5 phút cho nguội'],['Số lần quá nhiệt',s.hotCount],['CPU hiện tại',s.cpuNow+' MHz']].map(row).join('');
+ const c=s.crash;
+ $('sysC').innerHTML='<div class="hd"><h3>💥 Sự cố gần nhất</h3>'+(c?'<button class="btn" id="cclr" style="margin-left:auto">Đã xem, xóa</button>':'')+'</div>'+(c?[['Lần khởi động',c.boot],['Lý do',c.reason],['Lúc đang',c.step],['Tác vụ',c.task||'--'],
+  ['Lỗi',(c.cause||'')+(c.mcause!=null?' (mcause '+c.mcause+')':'')],['Địa chỉ lệnh (PC)',c.pc||'--'],['Trả về (RA)',c.ra||'--'],['Stack (SP)',c.sp||'--'],['MTVAL',c.mtval||'--'],
+  ['Địa chỉ trong stack',c.bt||'--'],['Tác vụ treo (watchdog)',c.wdtTasks||'--'],['Mã ELF',c.elf||'--']].map(row).join('')
+  :'<div class="row"><span>Chưa có sự cố nào</span><span class="v">✓</span></div>');
+ if(c)$('cclr').onclick=async()=>{await post('/api/crashclear',{});sys()};
+ const rr=[['Máy chủ MQTT',s.mqttHost],['Trạng thái',!s.mqttOn?'<b style="color:var(--org)">Chưa bật</b> – thêm MQTT_USER / MQTT_PASS vào secrets.h':s.mqttOk?'<b style="color:var(--acc)">Đã kết nối ✓</b>':'<b style="color:var(--red)">Chưa kết nối</b>'],
+  ['Số lần kết nối',s.mqttConnects],['Lệnh từ xa hợp lệ / bị từ chối',s.mqttReqOk+' / '+s.mqttReqBad+(s.mqttReject?' · gần nhất: '+s.mqttReject:'')],['Điện thoại xem gần nhất',ago(s.mqttWatchAgo)]];
+ $('sysR').innerHTML='<div class="hd"><h3>📡 Điều khiển từ xa</h3></div>'+rr.map(row).join('')+(MQ
+  ?'<div class="row"><span>Mật khẩu MQTT / khóa ghép trên máy này</span><button class="btn" id="rcfg">Đổi</button></div>'
+  :'<div class="row"><div><div class="t">Khóa ghép</div><div class="d">Nhập vào trang SmartAir trên GitHub (một lần cho mỗi điện thoại). Ai có khóa này sẽ điều khiển được máy lạnh.</div><div class="mono" id="pk" style="margin-top:6px"></div></div>'+
+   '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn" id="pkShow">Hiện khóa</button><button class="btn" id="pkNew">Tạo khóa mới</button></div></div>');
+ if(MQ)$('rcfg').onclick=()=>showSetup();
+ else{$('pkShow').onclick=async()=>{const k=await j('/api/pairkey');$('pk').textContent=k.key;const rg=document.createRange();rg.selectNodeContents($('pk'));const se=getSelection();se.removeAllRanges();se.addRange(rg);
+   let ok=false;try{ok=document.execCommand('copy')}catch(e){}toast(ok?'Đã chép khóa ghép':'Đã chọn sẵn khóa, giữ để chép')};
+  $('pkNew').onclick=async()=>{if(!confirm('Tạo khóa ghép mới? Mọi điện thoại đang điều khiển từ xa sẽ phải nhập lại khóa.'))return;const k=await (await fetch('/api/pairkey/new',{method:'POST'})).json();$('pk').textContent=k.key;toast('Đã tạo khóa mới')}}
+ $('sysL').innerHTML='<div class="hd"><h3>ⓘ Thông tin thiết bị</h3></div>'+r.map(row).join('')}
+const TABS=['ctl','his','log','set','sys'];let curTab='',slideDir='';
+function tab(p){if(!TABS.includes(p))p='ctl';document.querySelectorAll('.pg').forEach(e=>{e.classList.toggle('on',e.id=='p-'+p);e.classList.remove('sl','sr')});
+ const pg=$('p-'+p);if(slideDir){void pg.offsetWidth;pg.classList.add(slideDir)}slideDir='';curTab=p;
+ document.querySelectorAll('nav a').forEach(a=>{a.classList.toggle('on',a.dataset.p==p);if(a.dataset.p==p)a.scrollIntoView({block:'nearest',inline:'center'})});
+ if(p=='his')draw();if(p=='log')lg();if(p=='sys')sys();if(p=='set')load()}
+$('nav').querySelectorAll('a').forEach(a=>a.onclick=()=>{location.hash=a.dataset.p});
+// Vuốt trái / phải để chuyển tab (bỏ qua khi vuốt trên biểu đồ, ô nhập, ô chọn)
+let sx=0,sy=0,st0=0,swOk=false;
+document.addEventListener('touchstart',e=>{const t=e.touches[0];swOk=e.touches.length==1&&!e.target.closest('canvas,input,select,textarea,nav');sx=t.clientX;sy=t.clientY;st0=Date.now()},{passive:true});
+document.addEventListener('touchend',e=>{if(!swOk)return;const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;
+ if(Date.now()-st0>700||Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy)*1.5)return;
+ const i=TABS.indexOf(curTab)+(dx<0?1:-1);if(i<0||i>=TABS.length)return;slideDir=dx<0?'sl':'sr';location.hash=TABS[i]},{passive:true});
+onhashchange=()=>tab(location.hash.slice(1)||'ctl');onresize=()=>{if($('p-his').classList.contains('on'))draw()};
+function boot(){st().then(load).catch(()=>{}).then(()=>hist()).catch(()=>{})}
+onhashchange();
+if(MQ){const sc=document.createElement('script');sc.src='mqtt.min.js';sc.onload=mqConnect;sc.onerror=()=>toast('Không tải được thư viện MQTT',6000);document.head.appendChild(sc);
+ setInterval(()=>{if(!document.hidden)mqReq('watch','')},60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)mqReq('watch','')})}
+else boot();
+setInterval(()=>{if(!busy)st()},5000);
+setInterval(()=>{const p=location.hash.slice(1);if(p=='log')lg();if(p=='sys')sys()},15000);
+setInterval(hist,300000);
+</script></body></html>
