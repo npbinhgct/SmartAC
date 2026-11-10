@@ -228,9 +228,9 @@ const MQ=location.protocol=='https:'||QS.has('mqurl'),MQ_URL=QS.get('mqurl')||'w
 const OPS={'GET /api/status':'status','GET /api/settings':'settings','POST /api/settings':'setSettings','POST /api/cmd':'cmd',
  'POST /api/resume':'resume','GET /api/history':'history','GET /api/log':'log','GET /api/sys':'sys','POST /api/normal':'normal','POST /api/crashclear':'crashclear'};
 let mqc=null,mqStat=null,mqOn=null,pend={},booted=false,qrGot=false;
-// Ghép bằng mã QR: địa chỉ dạng .../SmartAir/#k=<khóa 64 ký tự>. Phần sau dấu # không được gửi lên máy chủ nào.
+// Ghép bằng mã QR: địa chỉ dạng .../SmartAC/#k=<khóa 64 ký tự>. Phần sau dấu # không được gửi lên máy chủ nào.
 // Lưu khóa vào máy này rồi xóa khóa khỏi thanh địa chỉ.
-const PAGES_URL='https://npbinhgct.github.io/SmartAir/';
+const PAGES_URL='https://npbinhgct.github.io/SmartAC/';
 {const m=location.hash.match(/^#k=([0-9a-fA-F]{64})$/);
  if(m){let c={};try{c=JSON.parse(localStorage.getItem('smartair')||'{}')}catch(e){}c.key=m[1].toLowerCase();
   try{localStorage.setItem('smartair',JSON.stringify(c));qrGot=true}catch(e){}history.replaceState(null,'',location.pathname+location.search+'#ctl')}}
