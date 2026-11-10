@@ -1,6 +1,6 @@
 {
-  "name": "SmartAir",
-  "short_name": "SmartAir",
+  "name": "SmartAC",
+  "short_name": "SmartAC",
   "description": "Bộ điều khiển máy lạnh thông minh",
   "start_url": "./#ctl",
   "scope": "./",

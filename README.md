@@ -1,4 +1,4 @@
-# SmartAir – trang điều khiển máy lạnh từ xa
+# SmartAC – trang điều khiển máy lạnh từ xa
 
 Trang này chạy trên GitHub Pages (https) và nói chuyện với bộ điều khiển ESP32 qua máy chủ MQTT EMQX Cloud.
 

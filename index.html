@@ -2,12 +2,12 @@
 <html lang="vi"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#1fbf9c">
-<title>SmartAir</title>
+<title>SmartAC</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta name="application-name" content="SmartAir">
-<meta name="apple-mobile-web-app-title" content="SmartAir">
+<meta name="application-name" content="SmartAC">
+<meta name="apple-mobile-web-app-title" content="SmartAC">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -201,7 +201,7 @@ canvas{display:block;width:100%;height:320px}
 </section>
 </main>
 <div class="ov" id="setup"><div class="card"><div class="in">
- <h3>🔐 Kết nối SmartAir từ xa</h3>
+ <h3>🔐 Kết nối SmartAC từ xa</h3>
  <small style="color:var(--mut)">Nhập một lần trên điện thoại này. Thông tin chỉ lưu trong trình duyệt của máy này, không gửi đi đâu khác.</small>
  <label for="sPass">Mật khẩu MQTT (tài khoản <b>phone</b> trên EMQX)</label><input type="password" id="sPass" autocomplete="current-password">
  <label for="sKey">Khóa ghép (64 ký tự)</label><input id="sKey" class="mono" autocomplete="off" spellcheck="false">
@@ -365,12 +365,12 @@ async function sys(){const s=await j('/api/sys'),kb=v=>Math.round(v/1024)+' KB',
   ['Số lần kết nối',s.mqttConnects],['Lệnh từ xa hợp lệ / bị từ chối',s.mqttReqOk+' / '+s.mqttReqBad+(s.mqttReject?' · gần nhất: '+s.mqttReject:'')],['Điện thoại xem gần nhất',ago(s.mqttWatchAgo)]];
  $('sysR').innerHTML='<div class="hd"><h3>📡 Điều khiển từ xa</h3></div>'+rr.map(row).join('')+(MQ
   ?'<div class="row"><span>Mật khẩu MQTT / khóa ghép trên máy này</span><button class="btn" id="rcfg">Đổi</button></div>'
-  :'<div class="row"><div><div class="t">Khóa ghép</div><div class="d">Mỗi điện thoại quét mã QR một lần (hoặc chép khóa vào trang SmartAir trên GitHub). Ai có khóa này sẽ điều khiển được máy lạnh.</div><div class="mono" id="pk" style="margin-top:6px"></div><div id="pkQr"></div></div>'+
+  :'<div class="row"><div><div class="t">Khóa ghép</div><div class="d">Mỗi điện thoại quét mã QR một lần (hoặc chép khóa vào trang SmartAC trên GitHub). Ai có khóa này sẽ điều khiển được máy lạnh.</div><div class="mono" id="pk" style="margin-top:6px"></div><div id="pkQr"></div></div>'+
    '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn" id="pkShow">Hiện khóa &amp; mã QR</button><button class="btn" id="pkNew">Tạo khóa mới</button></div></div>');
  if(MQ)$('rcfg').onclick=()=>showSetup();
  else{const qr=k=>{const q=qrcode(0,'M');q.addData(PAGES_URL+'#k='+k);q.make();
    $('pkQr').innerHTML='<div style="background:#fff;display:inline-block;padding:8px;border-radius:8px;margin-top:10px;line-height:0">'+q.createSvgTag(5,8)+'</div>'+
-    '<div class="d" style="margin-top:6px">Quét bằng camera điện thoại → mở trang SmartAir với khóa đã điền sẵn. Chỉ cho người được phép điều khiển quét.</div>'};
+    '<div class="d" style="margin-top:6px">Quét bằng camera điện thoại → mở trang SmartAC với khóa đã điền sẵn. Chỉ cho người được phép điều khiển quét.</div>'};
   $('pkShow').onclick=async()=>{const k=await j('/api/pairkey');$('pk').textContent=k.key;qr(k.key);const rg=document.createRange();rg.selectNodeContents($('pk'));const se=getSelection();se.removeAllRanges();se.addRange(rg);
    let ok=false;try{ok=document.execCommand('copy')}catch(e){}toast(ok?'Đã chép khóa ghép':'Đã chọn sẵn khóa, giữ để chép')};
   $('pkNew').onclick=async()=>{if(!confirm('Tạo khóa ghép mới? Mọi điện thoại đang điều khiển từ xa sẽ phải nhập lại khóa.'))return;const k=await (await fetch('/api/pairkey/new',{method:'POST'})).json();$('pk').textContent=k.key;qr(k.key);toast('Đã tạo khóa mới')}}
