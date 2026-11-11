@@ -79,7 +79,7 @@ nav a.on{color:var(--acc);border-color:var(--acc);font-weight:600}
 .sban.on{display:flex}.sban .btn{margin-left:auto;white-space:nowrap}
 .ban.on{display:flex}.ban .btn{margin-left:auto;padding:6px 12px;white-space:nowrap}
 @media(prefers-color-scheme:dark){.ban{background:#3a2a1c;color:#f6c08f}}
-.f input[type=number],.f input[type=time],.f select{width:118px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--chip);color:var(--tx);font-size:14.5px;font-family:inherit}
+.f input[type=number],.f input[type=time],.f input[type=text],.f select{width:118px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--chip);color:var(--tx);font-size:14.5px;font-family:inherit}
 .sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px;align-items:start}
 .sgrid .card{margin:0}
 .save{position:sticky;bottom:0;display:flex;justify-content:flex-end;align-items:center;gap:12px;padding:14px 0;background:linear-gradient(transparent,var(--bg) 35%)}
@@ -140,7 +140,7 @@ canvas{display:block;width:100%;height:320px}
   <div class="ban" id="ban">⏸ <span id="bantx">Đang tạm dừng do chỉnh tay</span><button class="btn" id="resume">Chạy lại</button></div>
  </div>
  <div class="card">
-  <div class="row"><div class="ic">🏠</div><div style="flex:1"><div class="t">Vắng nhà</div><div class="d">Tắt máy, chỉ hút ẩm khi phòng quá ẩm</div></div><input type="checkbox" class="sw" id="qAway"></div>
+  <div class="row"><div class="ic">🏠</div><div style="flex:1"><div class="t">Vắng nhà</div><div class="d" id="qAwayD">Tắt máy, chỉ hút ẩm khi phòng quá ẩm</div></div><input type="checkbox" class="sw" id="qAway"></div>
   <div class="row"><div class="ic">🍃</div><div style="flex:1"><div class="t">Chống mốc</div><div class="d">Chạy quạt cho khô dàn lạnh trước khi tắt</div></div><input type="checkbox" class="sw" id="qMold"></div>
   <div class="row"><div class="ic">🌙</div><div style="flex:1"><div class="t">Chế độ ngủ</div><div class="d">Tăng dần nhiệt độ đặt trong đêm cho đỡ lạnh, đỡ tốn điện</div></div><input type="checkbox" class="sw" id="qSleep"></div>
  </div>
@@ -182,8 +182,14 @@ canvas{display:block;width:100%;height:320px}
   <div class="row"><div class="t">Số phút chạy quạt</div><input type="number" id="moldMin" min="5" max="60"></div></div>
  <div class="card"><div class="hd"><h3>🏠 Vắng nhà</h3></div>
   <div class="row"><div class="t">Đang vắng nhà</div><input type="checkbox" class="sw" id="away"></div>
-  <div class="row"><div class="t">Hút ẩm khi quá ẩm</div><input type="checkbox" class="sw" id="awayDry"></div>
-  <div class="row"><div class="t">Hút ẩm khi độ ẩm ≥ (%)</div><input type="number" id="awayDryOn" min="50" max="95"></div></div>
+  <div class="row"><div><div class="t">Khi vắng nhà</div><div class="d">Tiết kiệm: vẫn đủ logic thông minh (điểm sương, hút ẩm, chống mốc, khung giờ), chỉ đổi nhiệt độ</div></div>
+   <select id="awayMode"><option value="0">Tắt máy</option><option value="1">Chỉ hút ẩm</option><option value="2">Tiết kiệm</option></select></div>
+  <div class="row aw2"><div class="t">Nhiệt độ khi vắng nhà (°C)</div><input type="number" id="awayTemp" min="24" max="30"></div>
+  <div class="row aw1"><div class="t">Hút ẩm khi độ ẩm ≥ (%)</div><input type="number" id="awayDryOn" min="50" max="95"></div>
+  <div class="row"><div><div class="t">Tự nhận biết ra / về</div><div class="d">Theo điện thoại trong WiFi nhà: rời WiFi thì bật Vắng nhà, về tới thì tắt</div></div><input type="checkbox" class="sw" id="autoAway"></div>
+  <div class="row aa"><div><div class="t">IP điện thoại</div><div class="d">IP cố định, tối đa 3 máy, cách nhau dấu phẩy</div></div><input type="text" id="phones" placeholder="192.168.31.50" style="width:150px"></div>
+  <div class="row aa"><div><div class="t">Không thấy điện thoại (phút)</div><div class="d">Quá thời gian này thì tính là đã ra ngoài</div></div><input type="number" id="awayAfter" min="5" max="120"></div>
+  <div class="row aa"><div class="d" id="presSt" style="flex:1">Trạng thái: --</div></div></div>
  <div class="card"><div class="hd"><h3>🔔 Thông báo Telegram</h3></div>
   <div class="row"><div><div class="t">Gửi thông báo</div><div class="d" id="tgSt">Báo khi tự động bật / tắt máy, chạy chống mốc. Sự cố (Sensibo lỗi, mất nhiệt kế, chế độ an toàn) luôn được báo.</div></div>
    <select id="tgMode"><option value="0">Tắt</option><option value="1">Vắng nhà</option><option value="2">Luôn luôn</option></select></div>
@@ -224,7 +230,7 @@ const $=i=>document.getElementById(i),T_MIN=26,T_MAX=30;
 const MODES={cool:'Làm lạnh',dry:'Hút ẩm',fan:'Quạt',auto:'Tự động',heat:'Sưởi'};
 const MI={cool:'<path d="M12 2v20M4 6l16 12M20 6L4 18"/>',dry:'<path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/>',fan:'<circle cx="12" cy="12" r="2"/><path d="M12 10c0-5 4-7 5-4s-3 4-5 4M14 12c5 0 7 4 4 5s-4-3-4-5M12 14c0 5-4 7-5 4s3-4 5-4M10 12c-5 0-7-4-4-5s4 3 4 5"/>',auto:'<circle cx="12" cy="12" r="9"/><path d="M9 16l3-8 3 8M10 13.5h4"/>',heat:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>'};
 const FANS={quiet:'Êm',low:'Thấp',medium_low:'Vừa-thấp',medium:'Vừa',medium_high:'Vừa-cao',high:'Cao',strong:'Mạnh',auto:'Tự động'};
-const K=['autoOn','winStart','winEnd','coolTemp','coolFan','dryByDew','dewOn','dewOff','dryOn','dryOff','dryFan','sleepOn','sleepStart','sleepEnd','moldOn','moldMin','away','awayDry','awayDryOn','pauseMin','gapMin','tgMode'];
+const K=['autoOn','winStart','winEnd','coolTemp','coolFan','dryByDew','dewOn','dewOff','dryOn','dryOff','dryFan','sleepOn','sleepStart','sleepEnd','moldOn','moldMin','away','awayMode','awayTemp','awayDryOn','autoAway','phones','awayAfter','pauseMin','gapMin','tgMode'];
 let S={fans:{}},C={},H=null,hrs=24,busy=0,pendT=null,tmr=null;
 // ---- Đường truyền: trong nhà gọi thẳng ESP32 (http); từ xa (GitHub Pages, https) đi qua MQTT ----
 const QS=new URLSearchParams(location.search),MQ_HOST='m261101e.ala.asia-southeast1.emqxsl.com';
@@ -288,7 +294,7 @@ async function st(){let s;try{s=S=await j('/api/status')}catch(e){$('hdot').clas
  $('hsrc').textContent=(s.acOk?(s.acOn?'Đang chạy · ':'Đang tắt · '):'')+'Nguồn đo '+s.src;
  $('vt').innerHTML=f1(s.t)+'<i>°C</i>';$('vh').innerHTML=f0(s.rh)+'<i>%</i>';$('vf').innerHTML=f1(s.feels)+'<i>°C</i>';
  $('vd').innerHTML=f1(s.dew)+'<i>°C</i>';$('vb').innerHTML=(s.batt>=0?s.batt:'--')+'<i>%</i>';$('vss').textContent=f1(s.sensiboT)+'° · '+f0(s.sensiboRh)+'%';
- $('tnow').textContent=f1(s.t);
+ $('tnow').textContent=f1(s.t);if($('presSt'))$('presSt').textContent=presTxt(s.pres);
  const on=s.acOn,m=s.acMode,noT=m=='fan'||!s.acOk;
  $('sum').textContent=s.acOk?(on?(MODES[m]||m)+(noT?'':' · '+s.acTemp+'°C')+' · quạt '+(FANS[s.acFan]||s.acFan):'Đang tắt'):'Chưa đọc được Sensibo';
  $('pwr').classList.toggle('on',!!on);
@@ -310,7 +316,14 @@ $('resume').onclick=async()=>{await post('/api/resume',{});toast('Đã chạy t�
 function opt(e,list,v){const w=[''].concat(list||[]);if(v&&!w.includes(v))w.push(v);e.innerHTML=w.map(f=>'<option value="'+f+'">'+(f?FANS[f]||f:'Giữ nguyên')+'</option>').join('');e.value=v}
 function fillSet(){opt($('coolFan'),S.fans.cool,C.coolFan);opt($('dryFan'),S.fans.dry,C.dryFan);
  K.forEach(k=>{const e=$(k);if(e.type=='checkbox')e.checked=C[k];else e.value=C[k]});
- $('qAuto').checked=C.autoOn;$('qAway').checked=C.away;$('qMold').checked=C.moldOn;$('qSleep').checked=C.sleepOn;dewVis()}
+ $('qAuto').checked=C.autoOn;$('qAway').checked=C.away;$('qMold').checked=C.moldOn;$('qSleep').checked=C.sleepOn;dewVis();awayVis()}
+function awayDesc(){const m=+C.awayMode;return (m==2?'Chạy tiết kiệm '+C.awayTemp+'°C':m==1?'Tắt máy, chỉ hút ẩm khi độ ẩm ≥ '+C.awayDryOn+'%':'Tắt máy')+(C.autoAway?' · tự nhận biết ra / về':'')}
+function awayVis(){const m=$('awayMode').value,a=$('autoAway').checked;document.querySelectorAll('.row.aw2').forEach(e=>e.style.display=m=='2'?'':'none');
+ document.querySelectorAll('.row.aw1').forEach(e=>e.style.display=m=='1'?'':'none');document.querySelectorAll('.row.aa').forEach(e=>e.style.display=a?'':'none');
+ if(C&&C.awayMode!=null)$('qAwayD').textContent=awayDesc()}
+$('awayMode').addEventListener('change',awayVis);$('autoAway').addEventListener('change',awayVis);
+function presTxt(p){if(!p)return 'Trạng thái: chưa bật hoặc chưa có IP điện thoại';const ag=a=>a<0?'chưa thấy':a<90?'vừa thấy':'thấy '+Math.round(a/60)+' phút trước';
+ return 'Trạng thái: '+(p.home==1?'đang ở nhà':p.home==0?'đã ra ngoài':'đang kiểm tra')+' · '+p.phones.map(x=>x.ip+' '+ag(x.ago)).join(' · ')}
 function dewVis(){const d=$('dryByDew').checked;document.querySelectorAll('.row.dew').forEach(e=>e.style.display=d?'':'none');document.querySelectorAll('.row.rh').forEach(e=>e.style.display=d?'none':'')}
 $('dryByDew').addEventListener('change',dewVis);
 async function load(){C=await j('/api/settings');fillSet();
