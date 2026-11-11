@@ -187,7 +187,7 @@ canvas{display:block;width:100%;height:320px}
   <div class="row aw2"><div class="t">Nhiệt độ khi vắng nhà (°C)</div><input type="number" id="awayTemp" min="24" max="30"></div>
   <div class="row aw1"><div class="t">Hút ẩm khi độ ẩm ≥ (%)</div><input type="number" id="awayDryOn" min="50" max="95"></div>
   <div class="row"><div><div class="t">Tự nhận biết ra / về</div><div class="d">Theo điện thoại trong WiFi nhà: rời WiFi thì bật Vắng nhà, về tới thì tắt</div></div><input type="checkbox" class="sw" id="autoAway"></div>
-  <div class="row aa"><div><div class="t">IP điện thoại</div><div class="d">IP cố định, tối đa 3 máy, cách nhau dấu phẩy</div></div><input type="text" id="phones" placeholder="192.168.31.50" style="width:150px"></div>
+  <div class="row aa"><div><div class="t">Điện thoại</div><div class="d">IP cố định hoặc địa chỉ MAC Wi-Fi, tối đa 3 máy, cách nhau dấu phẩy</div></div><input type="text" id="phones" placeholder="192.168.31.50" style="width:170px"></div>
   <div class="row aa"><div><div class="t">Không thấy điện thoại (phút)</div><div class="d">Quá thời gian này thì tính là đã ra ngoài</div></div><input type="number" id="awayAfter" min="5" max="120"></div>
   <div class="row aa"><div class="d" id="presSt" style="flex:1">Trạng thái: --</div></div></div>
  <div class="card"><div class="hd"><h3>🔔 Thông báo Telegram</h3></div>
@@ -323,7 +323,7 @@ function awayVis(){const m=$('awayMode').value,a=$('autoAway').checked;document.
  if(C&&C.awayMode!=null)$('qAwayD').textContent=awayDesc()}
 $('awayMode').addEventListener('change',awayVis);$('autoAway').addEventListener('change',awayVis);
 function presTxt(p){if(!p)return 'Trạng thái: chưa bật hoặc chưa có IP điện thoại';const ag=a=>a<0?'chưa thấy':a<90?'vừa thấy':'thấy '+Math.round(a/60)+' phút trước';
- return 'Trạng thái: '+(p.home==1?'đang ở nhà':p.home==0?'đã ra ngoài':'đang kiểm tra')+' · '+p.phones.map(x=>x.ip+' '+ag(x.ago)).join(' · ')}
+ return 'Trạng thái: '+(p.home==1?'đang ở nhà':p.home==0?'đã ra ngoài':'đang kiểm tra')+' · '+p.phones.map(x=>(x.id||x.ip)+(x.id&&x.ip&&x.id!=x.ip?' ('+x.ip+')':x.id&&!x.ip?' (đang tìm IP)':'')+' '+ag(x.ago)).join(' · ')}
 function dewVis(){const d=$('dryByDew').checked;document.querySelectorAll('.row.dew').forEach(e=>e.style.display=d?'':'none');document.querySelectorAll('.row.rh').forEach(e=>e.style.display=d?'none':'')}
 $('dryByDew').addEventListener('change',dewVis);
 async function load(){C=await j('/api/settings');fillSet();
@@ -367,7 +367,7 @@ async function sys(){const s=await j('/api/sys'),kb=v=>Math.round(v/1024)+' KB',
  $('sysT').innerHTML=tl.map(t=>'<div class="tile"><small>'+t[0]+'</small><div'+(t[0].includes('Treo')&&s.crashes?' style="color:var(--red)"':'')+'>'+t[1]+'<i>'+t[2]+'</i></div></div>').join('');
  const r=[['Chip',s.chip+' · '+s.cpuMHz+' MHz'],['RAM trống / tổng',kb(s.heapFree)+' / '+kb(s.heapTotal)],['RAM trống thấp nhất',kb(s.heapMin)],['Khối RAM liền lớn nhất',kb(s.heapBlock)],
   ['Flash',s.flashMB+' MB · code '+kb(s.sketch)+' · trống '+kb(s.sketchFree)],['Thời gian chạy',dur(s.uptime)],['Lý do khởi động gần nhất',s.resetReason],['Vòng lặp lâu nhất',s.loopMaxMs+' ms'],['Stack vòng lặp còn trống',s.stackFree+' byte'+(s.stackFree<2048?' ⚠':'')],
-  ['WiFi',s.ssid+' · kênh '+s.channel+' · '+s.rssi+' dBm'],['Địa chỉ IP',s.ip],['MAC',s.mac],['Số lần mất WiFi',s.wifiDrops],
+  ['WiFi',s.ssid+' · kênh '+s.channel+' · '+s.rssi+' dBm'],['Địa chỉ IP',s.ip+(s.mdns?' · <a href="http://'+s.mdns+'">'+s.mdns+'</a>':'')],['MAC',s.mac],['Số lần mất WiFi',s.wifiDrops],
   ['Sensibo: gọi OK / lỗi',s.sensiboOk+' / '+s.sensiboErr+' · mã gần nhất '+s.sensiboCode],['Sensibo OK gần nhất',ago(s.sensiboAgo)],['Đã đọc mức quạt',s.capsOk?'Có':'Chưa'],
   ['CGDK2: số gói nhận',s.blePackets],['CGDK2 gần nhất',ago(s.bleAgo)],['Bộ nhớ lưu (flash)',s.fsOk?kb(s.fsUsed)+' / '+kb(s.fsTotal):'Lỗi – chỉ lưu trong RAM'],['Bản firmware',s.build]];
  const row=x=>'<div class="row"><span>'+x[0]+'</span><span class="v">'+x[1]+'</span></div>',f1=v=>v==null?'--':(+v).toFixed(1);
