@@ -124,6 +124,7 @@ canvas{display:block;width:100%;height:320px}
   <div class="pm"><button class="rb" id="tm">−</button><button class="rb" id="tp">+</button></div>
   <div class="cap">Chế độ</div><div class="chips" id="modes"></div>
   <div class="cap">Quạt</div><div class="chips" id="fans"></div>
+  <div class="cap" id="swcap">Cánh gió</div><div class="chips" id="swing"></div>
  </div></div>
 </div>
 <div>
@@ -280,7 +281,7 @@ const j=async u=>(await api('GET',u)).json();
 function toast(t,ms){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);if(ms!==0)e._t=setTimeout(()=>e.classList.remove('on'),ms||2200)}
 async function post(u,o){return api('POST',u,JSON.stringify(o))}
 async function cmd(o){busy++;toast('Đang gửi lệnh tới Sensibo…',0);
- try{const r=await post('/api/cmd',o);toast(r.ok?'Đã gửi · tự động tạm dừng':'Lỗi: '+await r.text(),r.ok?2200:4000)}catch(e){toast('Không kết nối được ESP32',4000)}
+ try{const r=await post('/api/cmd',o);toast(r.ok?(o.swing?'Đã gửi':'Đã gửi · tự động tạm dừng'):'Lỗi: '+await r.text(),r.ok?2200:4000)}catch(e){toast('Không kết nối được ESP32',4000)}
  busy--;st();lg()}
 async function quick(k,v){C[k]=v;const r=await post('/api/settings',{[k]:v});toast(r.ok?'Đã lưu':'Lỗi lưu');C=await r.json().catch(()=>C);fillSet();st()}
 const f1=v=>v==null?'--':(+v).toFixed(1),f0=v=>v==null?'--':Math.round(v);
@@ -306,6 +307,8 @@ async function st(){let s;try{s=S=await j('/api/status')}catch(e){$('hdot').clas
  const ml=Object.keys(MODES).filter(k=>s.fans[k]);
  chips($('modes'),ml.length?ml:['cool','dry','fan'],on?m:'',MODES,'',v=>cmd({on:true,mode:v}));
  chips($('fans'),s.fans[m]||[],s.acFan,FANS,'fan',v=>cmd({on:true,fan:v}));
+ const sw=!!(s.swingOk&&on);$('swcap').style.display=$('swing').style.display=sw?'':'none';
+ if(sw)chips($('swing'),['on','off'],s.swingOn?'on':'off',{on:'Đảo',off:'Dừng'},'fan',v=>cmd({swing:v}));
  $('rsn').textContent=s.mold?'Đang chạy quạt chống mốc':s.paused?'Tự động đang tạm dừng':s.reason;
  $('ban').classList.toggle('on',!!s.paused);if(s.paused)$('bantx').textContent=s.reason;}
 function bump(d){const b=pendT!=null?pendT:S.acTemp;pendT=Math.max(T_MIN,Math.min(T_MAX,b+d));$('tset').textContent=pendT;setDial(pendT);
