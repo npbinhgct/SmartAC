@@ -103,6 +103,13 @@ canvas{display:block;width:100%;height:320px}
 .mono{font-family:ui-monospace,Consolas,monospace;font-size:13px;word-break:break-all}
 #toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top));max-width:calc(100% - 32px);text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.2);transform:translateX(-50%) translateY(-20px);background:var(--tx);color:var(--card);padding:11px 18px;border-radius:12px;font-size:14px;transition:.25s;z-index:9}
 #toast{opacity:0;visibility:hidden;pointer-events:none}
+/* Dải thời tiết ngoài trời (đầu trang, mọi tab) */
+.wx{display:flex;align-items:center;flex-wrap:wrap;gap:4px 12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 16px;margin:6px 0 16px;box-shadow:var(--sh);font-size:14px;color:var(--mut)}
+.wx .wi{font-size:22px;line-height:1}.wx b{font-size:16px;color:var(--tx)}
+.wx small{margin-left:auto;font-size:11.5px}
+.wx+nav{margin-top:0}
+.wx.rain{background:#e8f2fe;border-color:#a9cdf7}.wx.rain b{color:#1d6fc4}
+@media(prefers-color-scheme:dark){.wx.rain{background:#1b3350;border-color:#2f5d93}.wx.rain b{color:#8cc2fa}}
 #toast.on{transform:translateX(-50%);opacity:1;visibility:visible}
 /* Bố cục: điện thoại (tab dưới đáy) · máy tính bảng (tab trên, 2 cột) · máy tính (menu trái, 3 cột) */
 nav a svg{width:20px;height:20px;flex:none}
@@ -172,6 +179,7 @@ nav a{display:flex;align-items:center;gap:7px}
 <main>
 <div class="head"><svg width="46" height="46" viewBox="0 0 46 46"><rect x="3" y="16" width="26" height="22" rx="3" fill="#f4a6b8"/><rect x="3" y="27" width="26" height="11" rx="2" fill="#c96b84"/><rect x="31" y="22" width="12" height="16" rx="2" fill="none" stroke="#7b8794" stroke-width="2"/><rect x="9" y="3" width="16" height="9" rx="2" fill="#a7e9d8" stroke="#1fbf9c" stroke-width="1.5"/></svg>
 <div><h1>Phòng ngủ</h1><small><span id="hsrc">--</span></small></div><span class="st"><span class="dot" id="hdot"></span><span id="htx">Đang kết nối…</span></span></div>
+<div class="wx" id="wx" style="display:none"><span class="wi" id="wxI" aria-hidden="true">☁</span><b id="wxT">--</b><span id="wxD"></span><small>Thời tiết: Open-Meteo</small></div>
 <nav id="nav" aria-label="Các tab"><a data-p="ctl" href="#ctl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v9"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg><span>Điều khiển</span></a><a data-p="his" href="#his"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V4M4 20h16M8 16l4-5 3 3 5-6"/></svg><span>Lịch sử</span></a><a data-p="log" href="#log"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><span>Nhật ký</span></a><a data-p="set" href="#set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9L7 7M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg><span>Cài đặt</span></a><a data-p="sys" href="#sys"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg><span>ESP32</span></a></nav>
 
 <section class="pg" id="p-ctl"><div class="grid">
@@ -201,7 +209,6 @@ nav a{display:flex;align-items:center;gap:7px}
   <div class="tile"><small>🔋 Pin nhiệt kế</small><div id="vb">--<i>%</i></div></div>
   <div class="tile"><small>◎ Sensibo đo</small><div id="vss" style="font-size:17px">--</div></div>
  </div></div></div>
- <div class="card" id="outC" style="display:none"><div class="row"><div class="ic">☁</div><div style="flex:1"><div class="t" id="outT">--</div><div class="d" id="outD">--</div></div></div></div>
 </div>
 <div class="gc">
  <div class="card"><div class="hd"><h3>⚙ Tự động</h3><input type="checkbox" class="sw" id="qAuto" style="margin-left:auto"></div>
@@ -358,6 +365,7 @@ async function cmd(o){busy++;toast('Đang gửi lệnh tới Sensibo…',0);
 async function quick(k,v){C[k]=v;const r=await post('/api/settings',{[k]:v});toast(r.ok?'Đã lưu':'Lỗi lưu');C=await r.json().catch(()=>C);fillSet();st()}
 const f1=v=>v==null?'--':(+v).toFixed(1),f0=v=>v==null?'--':Math.round(v);
 // Mã thời tiết WMO (Open-Meteo)
+const wxIco=c=>c==0?'☀':c<=2?'⛅':c==3?'☁':c==45||c==48?'🌫':c>=95?'⛈':c>=51?'🌧':'☁';
 const wxTxt=c=>c==0?'Trời quang':c<=2?'Ít mây':c==3?'Nhiều mây':c==45||c==48?'Sương mù':c>=51&&c<=57?'Mưa phùn':c>=61&&c<=67?'Mưa':c>=80&&c<=82?'Mưa rào':c>=95?'Dông':'--';
 function setDial(t){const f=Math.max(0,Math.min(1,(t-T_MIN)/(T_MAX-T_MIN)));$('arc').setAttribute('stroke-dasharray',(452.4*f)+' 603.2');
  const a=(135+270*f)*Math.PI/180;$('knob').setAttribute('cx',120+96*Math.cos(a));$('knob').setAttribute('cy',120+96*Math.sin(a))}
@@ -371,9 +379,10 @@ async function st(){let s;try{s=S=await j('/api/status')}catch(e){$('hdot').clas
  $('hsrc').textContent=(s.acOk?(s.acOn?'Đang chạy · ':'Đang tắt · '):'')+'Nguồn đo '+s.src;
  $('vt').innerHTML=f1(s.t)+'<i>°C</i>';$('vh').innerHTML=f0(s.rh)+'<i>%</i>';$('vf').innerHTML=f1(s.feels)+'<i>°C</i>';
  $('vd').innerHTML=f1(s.dew)+'<i>°C</i>';$('vb').innerHTML=(s.batt>=0?s.batt:'--')+'<i>%</i>';$('vss').textContent=f1(s.sensiboT)+'° · '+f0(s.sensiboRh)+'%';
- const o=s.out;$('outC').style.display=o?'':'none';
- if(o){$('outT').textContent='Ngoài trời · '+wxTxt(o.code)+' · '+f1(o.t)+'°C · '+f0(o.rh)+'%';
-  $('outD').textContent='Hôm nay '+f0(o.tmin)+' – '+f0(o.tmax)+'°C'+(o.ago>3600?' · cập nhật '+Math.round(o.ago/60)+' phút trước':'')+' · Phú Định, TP.HCM · Thời tiết: Open-Meteo'}
+ const o=s.out;$('wx').style.display=o?'':'none';
+ if(o){const rain=(o.code>=51&&o.code<=99)||o.rain>0;$('wx').classList.toggle('rain',rain);$('wxI').textContent=wxIco(o.code);
+  $('wxT').textContent='Ngoài trời '+f1(o.t)+'°C · '+f0(o.rh)+'% · '+wxTxt(o.code);
+  $('wxD').textContent='Hôm nay '+f0(o.tmin)+' – '+f0(o.tmax)+'°C · Phú Định'+(o.ago>3600?' · cập nhật '+Math.round(o.ago/60)+' phút trước':'')}
  $('tnow').textContent=f1(s.t);if($('presSt'))$('presSt').textContent=presTxt(s.pres);
  const on=s.acOn,m=s.acMode,noT=m=='fan'||!s.acOk;
  $('sum').textContent=s.acOk?(on?(MODES[m]||m)+(noT?'':' · '+s.acTemp+'°C')+' · quạt '+(FANS[s.acFan]||s.acFan):'Đang tắt'):'Chưa đọc được Sensibo';
