@@ -101,7 +101,7 @@ canvas{display:block;width:100%;height:320px}
 .ov label{display:block;margin:14px 0 4px;font-size:14px;font-weight:600}
 .ov input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--chip);color:var(--tx);font-size:15px;font-family:inherit}
 .mono{font-family:ui-monospace,Consolas,monospace;font-size:13px;word-break:break-all}
-#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(80px);background:var(--tx);color:var(--card);padding:11px 18px;border-radius:12px;font-size:14px;transition:.25s;z-index:9}
+#toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top));max-width:calc(100% - 32px);text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.2);transform:translateX(-50%) translateY(-20px);background:var(--tx);color:var(--card);padding:11px 18px;border-radius:12px;font-size:14px;transition:.25s;z-index:9}
 #toast{opacity:0;visibility:hidden;pointer-events:none}
 #toast.on{transform:translateX(-50%);opacity:1;visibility:visible}
 /* Bố cục: điện thoại (tab dưới đáy) · máy tính bảng (tab trên, 2 cột) · máy tính (menu trái, 3 cột) */
@@ -118,7 +118,6 @@ nav a{display:flex;align-items:center;gap:7px}
  nav a{flex-direction:column;gap:3px;padding:6px 2px;font-size:11.5px;border:0;min-height:52px;justify-content:center}
  nav a.on{border:0}
  main{padding-bottom:96px}
- #toast{bottom:calc(84px + env(safe-area-inset-bottom))}
  .save{bottom:72px}}
 @media(min-width:700px) and (max-width:1099px){
  nav{border:0;background:var(--card);border-radius:14px;padding:6px;display:inline-flex;box-shadow:var(--sh)}
