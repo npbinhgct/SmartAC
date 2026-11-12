@@ -373,7 +373,7 @@ async function st(){let s;try{s=S=await j('/api/status')}catch(e){$('hdot').clas
  $('vd').innerHTML=f1(s.dew)+'<i>°C</i>';$('vb').innerHTML=(s.batt>=0?s.batt:'--')+'<i>%</i>';$('vss').textContent=f1(s.sensiboT)+'° · '+f0(s.sensiboRh)+'%';
  const o=s.out;$('outC').style.display=o?'':'none';
  if(o){$('outT').textContent='Ngoài trời · '+wxTxt(o.code)+' · '+f1(o.t)+'°C · '+f0(o.rh)+'%';
-  $('outD').textContent='Hôm nay '+f0(o.tmin)+' – '+f0(o.tmax)+'°C'+(o.ago>3600?' · cập nhật '+Math.round(o.ago/60)+' phút trước':'')+' · TP.HCM · Thời tiết: Open-Meteo'}
+  $('outD').textContent='Hôm nay '+f0(o.tmin)+' – '+f0(o.tmax)+'°C'+(o.ago>3600?' · cập nhật '+Math.round(o.ago/60)+' phút trước':'')+' · Phú Định, TP.HCM · Thời tiết: Open-Meteo'}
  $('tnow').textContent=f1(s.t);if($('presSt'))$('presSt').textContent=presTxt(s.pres);
  const on=s.acOn,m=s.acMode,noT=m=='fan'||!s.acOk;
  $('sum').textContent=s.acOk?(on?(MODES[m]||m)+(noT?'':' · '+s.acTemp+'°C')+' · quạt '+(FANS[s.acFan]||s.acFan):'Đang tắt'):'Chưa đọc được Sensibo';
