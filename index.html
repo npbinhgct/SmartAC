@@ -201,6 +201,7 @@ nav a{display:flex;align-items:center;gap:7px}
   <div class="tile"><small>🔋 Pin nhiệt kế</small><div id="vb">--<i>%</i></div></div>
   <div class="tile"><small>◎ Sensibo đo</small><div id="vss" style="font-size:17px">--</div></div>
  </div></div></div>
+ <div class="card" id="outC" style="display:none"><div class="row"><div class="ic">☁</div><div style="flex:1"><div class="t" id="outT">--</div><div class="d" id="outD">--</div></div></div></div>
 </div>
 <div class="gc">
  <div class="card"><div class="hd"><h3>⚙ Tự động</h3><input type="checkbox" class="sw" id="qAuto" style="margin-left:auto"></div>
@@ -218,7 +219,7 @@ nav a{display:flex;align-items:center;gap:7px}
  <div class="card"><div class="hd"><h3>📈 Nhiệt độ &amp; độ ẩm</h3><div class="seg" id="rng"><a data-h="6">6 giờ</a><a data-h="24" class="on">24 giờ</a></div></div>
   <div class="in" style="padding-bottom:4px"><div class="tiles" id="hst"></div></div>
   <div class="chartw"><canvas id="cv"></canvas><div class="tip" id="tip"></div></div>
-  <div class="lgd"><span><i style="background:var(--org)"></i>Nhiệt độ</span><span><i style="background:var(--blue)"></i>Độ ẩm</span><span><i style="background:rgba(47,140,240,.18)"></i>COOL</span><span><i style="background:rgba(31,191,156,.22)"></i>DRY</span><span><i style="background:rgba(123,135,148,.2)"></i>FAN</span></div>
+  <div class="lgd"><span><i style="background:var(--org)"></i>Nhiệt độ</span><span><i style="background:var(--blue)"></i>Độ ẩm</span><span><i style="background:repeating-linear-gradient(90deg,var(--org) 0 4px,transparent 4px 7px)"></i>Ngoài trời (nét đứt)</span><span><i style="background:rgba(47,140,240,.18)"></i>COOL</span><span><i style="background:rgba(31,191,156,.22)"></i>DRY</span><span><i style="background:rgba(123,135,148,.2)"></i>FAN</span></div>
  </div>
  <small style="color:var(--mut)">Lịch sử và nhật ký được lưu vào flash của ESP32, không mất khi mất điện.</small>
 </section>
@@ -356,6 +357,8 @@ async function cmd(o){busy++;toast('Đang gửi lệnh tới Sensibo…',0);
  busy--;st();lg()}
 async function quick(k,v){C[k]=v;const r=await post('/api/settings',{[k]:v});toast(r.ok?'Đã lưu':'Lỗi lưu');C=await r.json().catch(()=>C);fillSet();st()}
 const f1=v=>v==null?'--':(+v).toFixed(1),f0=v=>v==null?'--':Math.round(v);
+// Mã thời tiết WMO (Open-Meteo)
+const wxTxt=c=>c==0?'Trời quang':c<=2?'Ít mây':c==3?'Nhiều mây':c==45||c==48?'Sương mù':c>=51&&c<=57?'Mưa phùn':c>=61&&c<=67?'Mưa':c>=80&&c<=82?'Mưa rào':c>=95?'Dông':'--';
 function setDial(t){const f=Math.max(0,Math.min(1,(t-T_MIN)/(T_MAX-T_MIN)));$('arc').setAttribute('stroke-dasharray',(452.4*f)+' 603.2');
  const a=(135+270*f)*Math.PI/180;$('knob').setAttribute('cx',120+96*Math.cos(a));$('knob').setAttribute('cy',120+96*Math.sin(a))}
 function chips(el,list,cur,lab,cls,click){const k=list.join()+'|'+cur;if(el._k==k)return;el._k=k;
@@ -368,6 +371,9 @@ async function st(){let s;try{s=S=await j('/api/status')}catch(e){$('hdot').clas
  $('hsrc').textContent=(s.acOk?(s.acOn?'Đang chạy · ':'Đang tắt · '):'')+'Nguồn đo '+s.src;
  $('vt').innerHTML=f1(s.t)+'<i>°C</i>';$('vh').innerHTML=f0(s.rh)+'<i>%</i>';$('vf').innerHTML=f1(s.feels)+'<i>°C</i>';
  $('vd').innerHTML=f1(s.dew)+'<i>°C</i>';$('vb').innerHTML=(s.batt>=0?s.batt:'--')+'<i>%</i>';$('vss').textContent=f1(s.sensiboT)+'° · '+f0(s.sensiboRh)+'%';
+ const o=s.out;$('outC').style.display=o?'':'none';
+ if(o){$('outT').textContent='Ngoài trời · '+wxTxt(o.code)+' · '+f1(o.t)+'°C · '+f0(o.rh)+'%';
+  $('outD').textContent='Hôm nay '+f0(o.tmin)+' – '+f0(o.tmax)+'°C'+(o.ago>3600?' · cập nhật '+Math.round(o.ago/60)+' phút trước':'')+' · TP.HCM · Thời tiết: Open-Meteo'}
  $('tnow').textContent=f1(s.t);if($('presSt'))$('presSt').textContent=presTxt(s.pres);
  const on=s.acOn,m=s.acMode,noT=m=='fan'||!s.acOk;
  $('sum').textContent=s.acOk?(on?(MODES[m]||m)+(noT?'':' · '+s.acTemp+'°C')+' · quạt '+(FANS[s.acFan]||s.acFan):'Đang tắt'):'Chưa đọc được Sensibo';
@@ -443,19 +449,21 @@ function draw(hx){const cv=$('cv'),r=cv.getBoundingClientRect(),dp=devicePixelRa
  const g=cv.getContext('2d');g.scale(dp,dp);const W=r.width,Hh=r.height,L=40,R=40,T=12,B=26;g.font='12px system-ui';
  const now=Date.now()/1000,x0=now-hrs*3600,P=(H?H.pts:[]).filter(p=>p[0]>=x0-H.step);
  if(P.length<2){g.fillStyle=css('--mut');g.textAlign='center';g.fillText('Chưa đủ dữ liệu · mỗi 5 phút ghi 1 điểm',W/2,Hh/2);$('hst').innerHTML='';return}
- const X=ts=>L+(ts-x0)/(hrs*3600)*(W-L-R);let tn=Math.min(...P.map(p=>p[1])),tx=Math.max(...P.map(p=>p[1]));tn=Math.floor(tn-.5);tx=Math.ceil(tx+.5);
+ const X=ts=>L+(ts-x0)/(hrs*3600)*(W-L-R);const ov=P.filter(p=>p[4]!=null);let tn=Math.min(...P.map(p=>p[1]),...ov.map(p=>p[4])),tx=Math.max(...P.map(p=>p[1]),...ov.map(p=>p[4]));tn=Math.floor(tn-.5);tx=Math.ceil(tx+.5);
  const Yt=v=>T+(tx-v)/(tx-tn)*(Hh-T-B),Yh=v=>T+(100-v)/100*(Hh-T-B),bg=['rgba(47,140,240,.15)','rgba(31,191,156,.2)','rgba(123,135,148,.18)','rgba(123,135,148,.1)'];
  let s0=null;P.forEach((p,i)=>{const n=P[i+1],k=p[3]&1?(p[3]>>1)&3:-1,kn=n&&n[3]&1?(n[3]>>1)&3:-2;if(k<0)return;if(s0==null)s0=p[0];
   if(!n||kn!=k||n[0]-p[0]>H.step*3){const a=Math.max(L,X(s0));g.fillStyle=bg[k];g.fillRect(a,T,Math.max(2,X(n&&n[0]-p[0]<=H.step*3?n[0]:p[0]+H.step)-a),Hh-T-B);s0=null}});
  g.strokeStyle=css('--line');g.fillStyle=css('--mut');g.lineWidth=1;
  for(let k=0;k<=4;k++){const y=T+k*(Hh-T-B)/4;g.beginPath();g.moveTo(L,y);g.lineTo(W-R,y);g.stroke();g.textAlign='right';g.fillText((tx-k*(tx-tn)/4).toFixed(1)+'°',L-6,y+4);g.textAlign='left';g.fillText((100-k*25)+'%',W-R+6,y+4)}
  g.textAlign='center';const st=hrs==6?1:4;for(let k=0;k<=hrs;k+=st){const ts=x0+k*3600;g.fillText(tsS(ts),X(ts),Hh-6)}
- const line=(f,c)=>{g.strokeStyle=c;g.lineWidth=2.2;g.lineJoin='round';g.beginPath();let pv=0;P.forEach(p=>{const x=X(p[0]),y=f(p);if(pv&&p[0]-pv<H.step*3)g.lineTo(x,y);else g.moveTo(x,y);pv=p[0]});g.stroke()};
+ const line=(f,c,d)=>{g.strokeStyle=c;g.lineWidth=d?1.6:2.2;g.setLineDash(d?[5,4]:[]);g.lineJoin='round';g.beginPath();let pv=0;
+  P.forEach(p=>{const y=f(p);if(y==null){pv=0;return}const x=X(p[0]);if(pv&&p[0]-pv<H.step*3)g.lineTo(x,y);else g.moveTo(x,y);pv=p[0]});g.stroke();g.setLineDash([])};
  line(p=>Yt(p[1]),css('--org'));line(p=>Yh(p[2]),css('--blue'));
+ if(ov.length){line(p=>p[4]==null?null:Yt(p[4]),css('--org'),1);line(p=>p[5]==null?null:Yh(p[5]),css('--blue'),1)}
  if(hx!=null){let b=P[0];P.forEach(p=>{if(Math.abs(X(p[0])-hx)<Math.abs(X(b[0])-hx))b=p});const x=X(b[0]);
   g.strokeStyle=css('--mut');g.setLineDash([3,3]);g.beginPath();g.moveTo(x,T);g.lineTo(x,Hh-B);g.stroke();g.setLineDash([]);
   [[Yt(b[1]),css('--org')],[Yh(b[2]),css('--blue')]].forEach(([y,c])=>{g.fillStyle=c;g.beginPath();g.arc(x,y,4,0,7);g.fill()});
-  const tp=$('tip');tp.style.display='block';tp.innerHTML=tsS(b[0])+' · 🌡 '+b[1]+'° · 💧 '+b[2]+'%'+(b[3]&1?' · '+(['COOL','DRY','FAN','BẬT'][(b[3]>>1)&3]):' · tắt');
+  const tp=$('tip');tp.style.display='block';tp.innerHTML=tsS(b[0])+' · 🌡 '+b[1]+'° · 💧 '+b[2]+'%'+(b[3]&1?' · '+(['COOL','DRY','FAN','BẬT'][(b[3]>>1)&3]):' · tắt')+(b[4]!=null?' · ngoài '+b[4]+'° '+b[5]+'%':'');
   tp.style.left=Math.min(Math.max(0,x-tp.offsetWidth/2+12),W-tp.offsetWidth+12)+'px';tp.style.top='0px'}else $('tip').style.display='none';
  const on=P.filter(p=>p[3]&1).length*H.step/3600,mn=a=>Math.min(...a),mx=a=>Math.max(...a),tt=P.map(p=>p[1]),hh=P.map(p=>p[2]);
  $('hst').innerHTML='<div class="tile"><small>🌡 Nhiệt độ</small><div>'+mn(tt)+'–'+mx(tt)+'<i>°C</i></div></div><div class="tile"><small>💧 Độ ẩm</small><div>'+mn(hh)+'–'+mx(hh)+'<i>%</i></div></div><div class="tile"><small>⏱ Máy chạy</small><div>'+on.toFixed(1)+'<i>giờ</i></div></div>'}
