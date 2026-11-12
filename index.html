@@ -12,8 +12,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>
-:root{--bg:#f3f6f8;--card:#fff;--line:#e6ebef;--tx:#14213d;--mut:#5f6b78;--acc:#1fbf9c;--accT:#0e7f67;--onAcc:#fff;--acc2:#e7f8f3;--blue:#2f8cf0;--org:#f27b35;--red:#e5484d;--chip:#f4f6f8;--sh:0 1px 3px rgba(20,33,61,.06),0 6px 20px rgba(20,33,61,.05)}
-@media(prefers-color-scheme:dark){:root{--bg:#15191d;--card:#1f2429;--line:#2d343b;--tx:#e8edf2;--mut:#9aa5b0;--accT:#1fbf9c;--onAcc:#0d2a23;--acc2:#1d3a33;--chip:#272d33;--sh:none}}
+:root{--bg:#f3f6f8;--card:#fff;--line:#e6ebef;--tx:#14213d;--mut:#5f6b78;--acc:#1fbf9c;--accT:#0e7f67;--onAcc:#fff;--oT:#8b5cf6;--oH:#64748b;--acc2:#e7f8f3;--blue:#2f8cf0;--org:#f27b35;--red:#e5484d;--chip:#f4f6f8;--sh:0 1px 3px rgba(20,33,61,.06),0 6px 20px rgba(20,33,61,.05)}
+@media(prefers-color-scheme:dark){:root{--bg:#15191d;--card:#1f2429;--line:#2d343b;--tx:#e8edf2;--mut:#9aa5b0;--accT:#1fbf9c;--onAcc:#0d2a23;--oT:#b794f6;--oH:#a0aec0;--acc2:#1d3a33;--chip:#272d33;--sh:none}}
 *{box-sizing:border-box}
 body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--tx);-webkit-tap-highlight-color:transparent}
 @media(max-width:520px){#htm{display:none}}
@@ -219,7 +219,7 @@ nav a{display:flex;align-items:center;gap:7px}
  <div class="card"><div class="hd"><h3>📈 Nhiệt độ &amp; độ ẩm</h3><div class="seg" id="rng"><a data-h="6">6 giờ</a><a data-h="24" class="on">24 giờ</a></div></div>
   <div class="in" style="padding-bottom:4px"><div class="tiles" id="hst"></div></div>
   <div class="chartw"><canvas id="cv"></canvas><div class="tip" id="tip"></div></div>
-  <div class="lgd"><span><i style="background:var(--org)"></i>Nhiệt độ</span><span><i style="background:var(--blue)"></i>Độ ẩm</span><span><i style="background:repeating-linear-gradient(90deg,var(--org) 0 4px,transparent 4px 7px)"></i>Ngoài trời (nét đứt)</span><span><i style="background:rgba(47,140,240,.18)"></i>COOL</span><span><i style="background:rgba(31,191,156,.22)"></i>DRY</span><span><i style="background:rgba(123,135,148,.2)"></i>FAN</span></div>
+  <div class="lgd"><span><i style="background:var(--org)"></i>Nhiệt độ</span><span><i style="background:var(--blue)"></i>Độ ẩm</span><span><i style="background:var(--oT)"></i>Nhiệt độ ngoài trời</span><span><i style="background:var(--oH)"></i>Độ ẩm ngoài trời</span><span><i style="background:rgba(47,140,240,.18)"></i>COOL</span><span><i style="background:rgba(31,191,156,.22)"></i>DRY</span><span><i style="background:rgba(123,135,148,.2)"></i>FAN</span></div>
  </div>
  <small style="color:var(--mut)">Lịch sử và nhật ký được lưu vào flash của ESP32, không mất khi mất điện.</small>
 </section>
@@ -456,13 +456,13 @@ function draw(hx){const cv=$('cv'),r=cv.getBoundingClientRect(),dp=devicePixelRa
  g.strokeStyle=css('--line');g.fillStyle=css('--mut');g.lineWidth=1;
  for(let k=0;k<=4;k++){const y=T+k*(Hh-T-B)/4;g.beginPath();g.moveTo(L,y);g.lineTo(W-R,y);g.stroke();g.textAlign='right';g.fillText((tx-k*(tx-tn)/4).toFixed(1)+'°',L-6,y+4);g.textAlign='left';g.fillText((100-k*25)+'%',W-R+6,y+4)}
  g.textAlign='center';const st=hrs==6?1:4;for(let k=0;k<=hrs;k+=st){const ts=x0+k*3600;g.fillText(tsS(ts),X(ts),Hh-6)}
- const line=(f,c,d)=>{g.strokeStyle=c;g.lineWidth=d?1.6:2.2;g.setLineDash(d?[5,4]:[]);g.lineJoin='round';g.beginPath();let pv=0;
-  P.forEach(p=>{const y=f(p);if(y==null){pv=0;return}const x=X(p[0]);if(pv&&p[0]-pv<H.step*3)g.lineTo(x,y);else g.moveTo(x,y);pv=p[0]});g.stroke();g.setLineDash([])};
+ const line=(f,c,w)=>{g.strokeStyle=c;g.lineWidth=w||2.2;g.lineJoin='round';g.beginPath();let pv=0;
+  P.forEach(p=>{const y=f(p);if(y==null){pv=0;return}const x=X(p[0]);if(pv&&p[0]-pv<H.step*3)g.lineTo(x,y);else g.moveTo(x,y);pv=p[0]});g.stroke()};
  line(p=>Yt(p[1]),css('--org'));line(p=>Yh(p[2]),css('--blue'));
- if(ov.length){line(p=>p[4]==null?null:Yt(p[4]),css('--org'),1);line(p=>p[5]==null?null:Yh(p[5]),css('--blue'),1)}
+ if(ov.length){line(p=>p[4]==null?null:Yt(p[4]),css('--oT'),1.8);line(p=>p[5]==null?null:Yh(p[5]),css('--oH'),1.8)}
  if(hx!=null){let b=P[0];P.forEach(p=>{if(Math.abs(X(p[0])-hx)<Math.abs(X(b[0])-hx))b=p});const x=X(b[0]);
   g.strokeStyle=css('--mut');g.setLineDash([3,3]);g.beginPath();g.moveTo(x,T);g.lineTo(x,Hh-B);g.stroke();g.setLineDash([]);
-  [[Yt(b[1]),css('--org')],[Yh(b[2]),css('--blue')]].forEach(([y,c])=>{g.fillStyle=c;g.beginPath();g.arc(x,y,4,0,7);g.fill()});
+  [[Yt(b[1]),css('--org')],[Yh(b[2]),css('--blue')]].concat(b[4]!=null?[[Yt(b[4]),css('--oT')],[Yh(b[5]),css('--oH')]]:[]).forEach(([y,c])=>{g.fillStyle=c;g.beginPath();g.arc(x,y,4,0,7);g.fill()});
   const tp=$('tip');tp.style.display='block';tp.innerHTML=tsS(b[0])+' · 🌡 '+b[1]+'° · 💧 '+b[2]+'%'+(b[3]&1?' · '+(['COOL','DRY','FAN','BẬT'][(b[3]>>1)&3]):' · tắt')+(b[4]!=null?' · ngoài '+b[4]+'° '+b[5]+'%':'');
   tp.style.left=Math.min(Math.max(0,x-tp.offsetWidth/2+12),W-tp.offsetWidth+12)+'px';tp.style.top='0px'}else $('tip').style.display='none';
  const on=P.filter(p=>p[3]&1).length*H.step/3600,mn=a=>Math.min(...a),mx=a=>Math.max(...a),tt=P.map(p=>p[1]),hh=P.map(p=>p[2]);
