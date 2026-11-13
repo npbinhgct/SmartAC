@@ -318,7 +318,7 @@ let S={fans:{}},C={},H=null,hrs=24,busy=0,pendT=null,tmr=null;
 const QS=new URLSearchParams(location.search),MQ_HOST='m261101e.ala.asia-southeast1.emqxsl.com';
 const MQ=location.protocol=='https:'||QS.has('mqurl'),MQ_URL=QS.get('mqurl')||'wss://'+MQ_HOST+':8084/mqtt';
 const OPS={'GET /api/status':'status','GET /api/settings':'settings','POST /api/settings':'setSettings','POST /api/cmd':'cmd',
- 'POST /api/resume':'resume','GET /api/history':'history','GET /api/log':'log','GET /api/sys':'sys','POST /api/normal':'normal','POST /api/crashclear':'crashclear','POST /api/tgtest':'tgtest'};
+ 'POST /api/resume':'resume','GET /api/history':'history','GET /api/log':'log','GET /api/sys':'sys','POST /api/normal':'normal','POST /api/crashclear':'crashclear','POST /api/tgtest':'tgtest','POST /api/irtest':'irtest'};
 let mqc=null,mqStat=null,mqOn=null,pend={},booted=false,qrGot=false;
 // Ghép bằng mã QR: địa chỉ dạng .../SmartAC/#k=<khóa 64 ký tự>. Phần sau dấu # không được gửi lên máy chủ nào.
 // Lưu khóa vào máy này rồi xóa khóa khỏi thanh địa chỉ.
@@ -502,10 +502,13 @@ async function sys(){const s=await j('/api/sys'),kb=v=>Math.round(v/1024)+' KB',
  const rr=[['Máy chủ MQTT',s.mqttHost],['Trạng thái',!s.mqttOn?'<b style="color:var(--org)">Chưa bật</b> – thêm MQTT_USER / MQTT_PASS vào secrets.h':s.mqttOk?'<b style="color:var(--acc)">Đã kết nối ✓</b>':'<b style="color:var(--red)">Chưa kết nối</b>'],
   ['Số lần kết nối',s.mqttConnects],['Lệnh từ xa hợp lệ / bị từ chối',s.mqttReqOk+' / '+s.mqttReqBad+(s.mqttReject?' · gần nhất: '+s.mqttReject:'')],['Điện thoại xem gần nhất',ago(s.mqttWatchAgo)],
   ['Telegram',!s.tgOn?'<b style="color:var(--org)">Chưa cài</b> – thêm TELEGRAM_TOKEN / TELEGRAM_CHAT_ID vào secrets.h':['Tắt','Chỉ khi vắng nhà','Luôn luôn'][s.tgMode]+' · đã gửi '+s.tgSent+' · lỗi '+s.tgFail+(s.tgQueue?' · chờ gửi '+s.tgQueue:'')+(s.tgErr?' · <span style="color:var(--red)">'+s.tgErr+'</span>':'')]];
+ if(s.irOn)rr.push(['Hồng ngoại (remote gốc)',s.irProto?s.irProto+' · đã phát '+s.irTx+' · nhận '+s.irRx:'<b style="color:var(--org)">Chưa học</b> – bấm remote gốc 1 lần'],['Bấm remote gốc gần nhất',s.irLast||'--'],
+  ['Thử phát hồng ngoại','<button class="btn" id="irT"'+(s.irProto?'':' disabled')+'>Phát thử</button>']);
  $('sysR').innerHTML='<div class="hd"><h3>📡 Điều khiển từ xa</h3></div>'+rr.map(row).join('')+(MQ
   ?'<div class="row"><span>Mật khẩu MQTT / khóa ghép trên máy này</span><button class="btn" id="rcfg">Đổi</button></div>'
   :'<div class="row"><div><div class="t">Khóa ghép</div><div class="d">Mỗi điện thoại quét mã QR một lần (hoặc chép khóa vào trang SmartAC trên GitHub). Ai có khóa này sẽ điều khiển được máy lạnh.</div><div class="mono" id="pk" style="margin-top:6px"></div><div id="pkQr"></div></div>'+
    '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn" id="pkShow">Hiện khóa &amp; mã QR</button><button class="btn" id="pkNew">Tạo khóa mới</button></div></div>');
+ if(s.irOn)$('irT').onclick=async()=>{toast('Đang phát…',0);try{const r=await post('/api/irtest',{});toast(await r.text(),r.ok?4000:6000)}catch(e){toast('Không kết nối được ESP32',4000)}};
  if(MQ)$('rcfg').onclick=()=>showSetup();
  else{const qr=k=>{const q=qrcode(0,'M');q.addData(PAGES_URL+'#k='+k);q.make();
    $('pkQr').innerHTML='<div style="background:#fff;display:inline-block;padding:8px;border-radius:8px;margin-top:10px;line-height:0">'+q.createSvgTag(5,8)+'</div>'+
