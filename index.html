@@ -238,14 +238,9 @@ nav a{display:flex;align-items:center;gap:7px}
 <div class="sgrid" id="setStore">
  <div class="card" id="c-win"><div class="hd"><h3>🕙 Lịch bật / tắt</h3></div>
   <div class="row"><div><div class="t">Tự động</div><div class="d">Công tắc tổng</div></div><input type="checkbox" class="sw" id="autoOn"></div>
-  <div class="row"><div><div class="t">💼 Ngày đi làm</div><div class="d">Những ngày không chọn ở mục Ngày nghỉ bên dưới</div></div></div>
-  <div class="row"><div class="t">Bật máy lúc</div><input type="time" id="winStart"></div>
-  <div class="row"><div><div class="t">Buổi sáng tắt máy</div><div class="d" id="winOffD"></div></div><input type="checkbox" class="sw" id="winOff"></div>
-  <div class="row"><div class="t">Tắt máy lúc</div><input type="time" id="winEnd"></div>
-  <div class="row"><div><div class="t">🏖 Ngày nghỉ</div><div class="d">Chọn những ngày ở nhà (lễ, Tết thì chọn thêm). Buổi sáng của ngày nghỉ tắt máy theo giờ ở đây, không theo giờ ngày đi làm.</div><div class="chips" id="offChips" style="margin-top:8px"></div></div><input type="number" id="offDays" hidden></div>
-  <div class="row"><div class="t">Bật máy lúc</div><input type="time" id="offStart"></div>
-  <div class="row"><div><div class="t">Buổi sáng tắt máy</div><div class="d" id="offOffD"></div></div><input type="checkbox" class="sw" id="offOff"></div>
-  <div class="row"><div class="t">Tắt máy lúc</div><input type="time" id="offEnd"></div></div>
+  <div class="row"><div style="flex:1"><div class="t">▶ Bật máy lúc</div><div class="chips" id="onChips" style="margin-top:8px"></div></div><input type="time" id="winStart"><input type="number" id="onWeek" hidden></div>
+  <div class="row"><div style="flex:1"><div class="t">⏹ Tắt máy lúc</div><div class="chips" id="offChips" style="margin-top:8px"></div></div><input type="time" id="winEnd"><input type="number" id="offWeek" hidden></div>
+  <div class="row"><div class="d">Chọn ngày bằng cách bấm vào thứ (xanh = có). Ngày nào không chọn ở "Tắt máy" thì sáng hôm đó máy chạy tiếp, ví dụ bỏ T7, CN để cuối tuần không bị tắt sáng.</div></div></div>
  <div class="card" id="c-cool"><div class="hd"><h3>❄ Làm lạnh</h3></div>
   <div class="row"><div class="t">Nhiệt độ đặt (°C)</div><input type="number" id="coolTemp" min="16" max="30"></div>
   <div class="row"><div><div class="t">Quạt</div><div class="d">Mức thường khi phòng đã gần nhiệt độ đặt</div></div><select id="coolFan"></select></div>
@@ -318,7 +313,7 @@ const $=i=>document.getElementById(i),T_MIN=26,T_MAX=30;
 const MODES={cool:'Làm lạnh',dry:'Hút ẩm',fan:'Quạt',auto:'Tự động',heat:'Sưởi'};
 const MI={cool:'<path d="M12 2v20M4 6l16 12M20 6L4 18"/>',dry:'<path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/>',fan:'<circle cx="12" cy="12" r="2"/><path d="M12 10c0-5 4-7 5-4s-3 4-5 4M14 12c5 0 7 4 4 5s-4-3-4-5M12 14c0 5-4 7-5 4s3-4 5-4M10 12c-5 0-7-4-4-5s4 3 4 5"/>',auto:'<circle cx="12" cy="12" r="9"/><path d="M9 16l3-8 3 8M10 13.5h4"/>',heat:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>'};
 const FANS={quiet:'Êm',low:'Thấp',medium_low:'Vừa-thấp',medium:'Vừa',medium_high:'Vừa-cao',high:'Cao',strong:'Mạnh',auto:'Tự động'};
-const K=['autoOn','winStart','winEnd','offDays','offStart','offEnd','coolTemp','coolFan','boostT1','boostT2','dryByDew','dewOn','dewOff','dryOn','dryOff','dryFan','sleepOn','sleepStart','sleepEnd','moldOn','moldMin','away','awayMode','awayTemp','awayDryOn','autoAway','phones','awayAfter','pauseMin','gapMin','tgMode'];
+const K=['autoOn','winStart','winEnd','onWeek','offWeek','coolTemp','coolFan','boostT1','boostT2','dryByDew','dewOn','dewOff','dryOn','dryOff','dryFan','sleepOn','sleepStart','sleepEnd','moldOn','moldMin','away','awayMode','awayTemp','awayDryOn','autoAway','phones','awayAfter','pauseMin','gapMin','tgMode'];
 let S={fans:{}},C={},H=null,hrs=24,busy=0,pendT=null,pendTo=0,tmr=null;
 // ---- Đường truyền: trong nhà gọi thẳng ESP32 (http); từ xa (GitHub Pages, https) đi qua MQTT ----
 const QS=new URLSearchParams(location.search),MQ_HOST='m261101e.ala.asia-southeast1.emqxsl.com';
@@ -432,18 +427,15 @@ $('resume').onclick=async()=>{await post('/api/resume',{});toast('Đã chạy t�
 [['qAuto','autoOn'],['qAway','away'],['qMold','moldOn'],['qSleep','sleepOn']].forEach(([q,k])=>$(q).onchange=e=>quick(k,e.target.checked));
 function opt(e,list,v){const w=[''].concat(list||[]);if(v&&!w.includes(v))w.push(v);e.innerHTML=w.map(f=>'<option value="'+f+'">'+(f?FANS[f]||f:'Giữ nguyên')+'</option>').join('');e.value=v}
 // Tóm tắt từng nhóm cài đặt (hiện trong danh sách)
-// Lịch: ngày làm / ngày nghỉ (offDays: bit0 = CN ... bit6 = T7), giờ tắt "" = không tắt
+// Lịch: bật lúc winStart vào các ngày onWeek, tắt lúc winEnd vào các ngày offWeek (bit0 = CN ... bit6 = T7)
 const DAYS=[[1,'T2'],[2,'T3'],[3,'T4'],[4,'T5'],[5,'T6'],[6,'T7'],[0,'CN']];
-const span=(a,b)=>'bật '+a+(b?', tắt '+b:', chạy suốt');
-const offTxt=()=>DAYS.filter(([b])=>C.offDays>>b&1).map(d=>d[1]).join(', ')||'không có';
-function today(){if(C.offDays==null)return '--';const o=C.offDays>>new Date().getDay()&1;return (o?'Ngày nghỉ':'Ngày đi làm')+' · '+(o?span(C.offStart,C.offEnd):span(C.winStart,C.winEnd))}
-function offChips(){const v=+$('offDays').value;$('offChips').innerHTML=DAYS.map(([b,n])=>'<button type="button" class="chip'+(v>>b&1?' on':'')+'" data-b="'+b+'">'+n+'</button>').join('');
- $('offChips').querySelectorAll('button').forEach(e=>e.onclick=()=>{$('offDays').value=+$('offDays').value^(1<<e.dataset.b);offChips()})}
-// Công tắc "Buổi sáng tắt máy": xanh = sáng có tắt (hiện ô giờ tắt), xám = máy chạy suốt, sáng không tắt
-function noOffVis(){['win','off'].forEach(p=>{const t=$(p+'Off').checked;$(p+'End').closest('.row').style.display=t?'':'none';
- $(p+'OffD').textContent=t?'Có: tắt máy lúc giờ bên dưới':'Không: máy chạy suốt, buổi sáng không tắt'})}
-['winOff','offOff'].forEach(id=>$(id).addEventListener('change',noOffVis));
-const SETG=[['c-win',()=>(C.autoOn?'Tự động bật':'Tự động tắt')+' · Ngày đi làm: '+span(C.winStart,C.winEnd)+' · Ngày nghỉ ('+offTxt()+'): '+span(C.offStart,C.offEnd)],
+const dayTxt=w=>w==127?'mọi ngày':w==62?'T2–T6':w==65?'T7, CN':DAYS.filter(([b])=>w>>b&1).map(d=>d[1]).join(', ')||'không ngày nào';
+function today(){if(C.onWeek==null)return '--';const d=new Date().getDay(),on=C.onWeek>>d&1,off=C.offWeek>>d&1;
+ const a=[off?[C.winEnd,'tắt '+C.winEnd]:null,on?[C.winStart,'bật '+C.winStart]:null].filter(Boolean).sort().map(x=>x[1]);
+ return a.length?a.join(', ')+(off?'':' · sáng không tắt'):'không bật, không tắt'}
+function dayChips(box,inp){const v=+$(inp).value;$(box).innerHTML=DAYS.map(([b,n])=>'<button type="button" class="chip'+(v>>b&1?' on':'')+'" data-b="'+b+'">'+n+'</button>').join('');
+ $(box).querySelectorAll('button').forEach(e=>e.onclick=()=>{$(inp).value=+$(inp).value^(1<<e.dataset.b);dayChips(box,inp)})}
+const SETG=[['c-win',()=>(C.autoOn?'Tự động bật':'Tự động tắt')+' · Bật '+C.winStart+' ('+dayTxt(C.onWeek)+') · Tắt '+C.winEnd+' ('+dayTxt(C.offWeek)+')'],
  ['c-cool',()=>C.coolTemp+'°C · quạt '+(FANS[C.coolFan]||'giữ nguyên')+' · tăng quạt khi nóng hơn '+C.boostT1+'° / '+C.boostT2+'°'],
  ['c-dry',()=>C.dryByDew?'Theo điểm sương: DRY ≥ '+C.dewOn+'° · về COOL ≤ '+C.dewOff+'°':'Theo độ ẩm: DRY ≥ '+C.dryOn+'% · về COOL ≤ '+C.dryOff+'%'],
  ['c-sleep',()=>C.sleepOn?C.sleepStart+' – '+C.sleepEnd+' · quạt Êm, tăng dần nhiệt độ':'Tắt'],
@@ -457,12 +449,11 @@ function setList(){if(C.autoOn==null)return;
  $('setList').querySelectorAll('button').forEach(b=>b.onclick=()=>{const c=$(b.dataset.c);openSheet(c.querySelector('h3').textContent,c,()=>saveGroup(c))})}
 // Lưu riêng một nhóm: chỉ gửi các ô nằm trong nhóm đó
 async function saveGroup(c){const o={};K.forEach(k=>{const e=$(k);if(!c.contains(e))return;o[k]=e.type=='checkbox'?e.checked:(e.type=='number'?+e.value:e.value)});
- ['win','off'].forEach(p=>{if(c.contains($(p+'Off'))&&!$(p+'Off').checked)o[p+'End']=''});
  $('msg').textContent='Đang lưu…';const r=await post('/api/settings',o);
  if(r.ok){C=await r.json();closeSheet();fillSet();toast('Đã lưu ✓')}else $('msg').textContent='Lỗi: '+await r.text();lg()}
 function fillSet(){opt($('coolFan'),S.fans.cool,C.coolFan);opt($('dryFan'),S.fans.dry,C.dryFan);
  K.forEach(k=>{const e=$(k);if(e.type=='checkbox')e.checked=C[k];else e.value=C[k]});
- ['win','off'].forEach(p=>{const n=C[p+'End']==='';$(p+'Off').checked=!n;if(n)$(p+'End').value='06:00'});noOffVis();offChips();$('vday').textContent=today();
+ dayChips('onChips','onWeek');dayChips('offChips','offWeek');$('vday').textContent=today();
  $('qAuto').checked=C.autoOn;$('qAway').checked=C.away;$('qMold').checked=C.moldOn;$('qSleep').checked=C.sleepOn;dewVis();awayVis();setList()}
 function awayDesc(){const m=+C.awayMode;return (m==2?'Chạy tiết kiệm '+C.awayTemp+'°C':m==1?'Tắt máy, chỉ hút ẩm khi độ ẩm ≥ '+C.awayDryOn+'%':'Tắt máy')+(C.autoAway?' · tự nhận biết ra / về':'')}
 function awayVis(){const m=$('awayMode').value,a=$('autoAway').checked;document.querySelectorAll('.row.aw2').forEach(e=>e.style.display=m=='2'?'':'none');
