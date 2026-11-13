@@ -48,7 +48,7 @@ nav a.on{color:var(--accT);border-color:var(--accT);font-weight:600}
 .ctr small{font-size:11.5px;letter-spacing:1.3px;color:var(--mut);font-weight:600}
 .ctr .big{font-size:72px;font-weight:300;line-height:1;margin:4px 0 6px}
 .ctr .big sup{font-size:22px;vertical-align:top;margin-left:2px}
-.pm{display:flex;justify-content:space-between;width:290px;margin:-34px auto 0}
+.pm{display:flex;justify-content:space-between;width:290px;margin:-34px auto 0;position:relative;z-index:1}
 .rb{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--tx);font-size:24px;cursor:pointer;box-shadow:var(--sh)}
 .rb:disabled{opacity:.35}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
@@ -325,7 +325,7 @@ const QS=new URLSearchParams(location.search),MQ_HOST='m261101e.ala.asia-southea
 const MQ=location.protocol=='https:'||QS.has('mqurl'),MQ_URL=QS.get('mqurl')||'wss://'+MQ_HOST+':8084/mqtt';
 const OPS={'GET /api/status':'status','GET /api/settings':'settings','POST /api/settings':'setSettings','POST /api/cmd':'cmd',
  'POST /api/resume':'resume','GET /api/history':'history','GET /api/log':'log','GET /api/sys':'sys','POST /api/normal':'normal','POST /api/crashclear':'crashclear','POST /api/tgtest':'tgtest','POST /api/irtest':'irtest'};
-let mqc=null,mqStat=null,mqOn=null,pend={},booted=false,qrGot=false;
+let mqc=null,mqStat=null,mqOn=null,pend={},booted=false,qrGot=false,mqRx=0,mqRetry=0;
 // Ghép bằng mã QR: địa chỉ dạng .../SmartAC/#k=<khóa 64 ký tự>. Phần sau dấu # không được gửi lên máy chủ nào.
 // Lưu khóa vào máy này rồi xóa khóa khỏi thanh địa chỉ.
 const PAGES_URL='https://npbinhgct.github.io/SmartAC/';
@@ -343,18 +343,25 @@ function mqConnect(){const c=cfgGet();if(!c.pass||!c.key){showSetup(qrGot?'Đã 
  if(mqc)mqc.end(true);
  mqc=mqtt.connect(MQ_URL,{username:'phone',password:c.pass,clientId:'smartair-phone-'+hex(crypto.getRandomValues(new Uint8Array(4))),
   clean:true,reconnectPeriod:5000,connectTimeout:10000,keepalive:60});
- mqc.on('connect',()=>{$('setup').classList.remove('on');mqc.subscribe(['smartair/esp/status','smartair/esp/online','smartair/esp/resp/#']);
+ mqc.on('connect',()=>{mqRx=Date.now();mqRetry=0;$('setup').classList.remove('on');mqc.subscribe(['smartair/esp/status','smartair/esp/online','smartair/esp/resp/#']);
   mqReq('watch','');if(!booted){booted=true;boot()}});
- mqc.on('message',(t,p)=>{const s=p.toString();
+ mqc.on('message',(t,p)=>{mqRx=Date.now();const s=p.toString();
   if(t=='smartair/esp/status'){mqStat=s;st()}else if(t=='smartair/esp/online'){mqOn=s=='1';st()}
   else if(t.startsWith('smartair/esp/resp/')){const q=t.split('/'),r=pend[q[3]];if(r){delete pend[q[3]];r(new Res(+q[4],s))}}});
  mqc.on('error',e=>{if(/auth|authori[sz]ed|bad user|password/i.test(e.message)){mqc.end(true);showSetup('Máy chủ từ chối: sai mật khẩu MQTT')}});
  mqc.on('offline',()=>st());
 }
-async function mqReq(op,body){const c=cfgGet();if(!mqc||!mqc.connected)return new Res(503,'Chưa kết nối được máy chủ MQTT');
+// iPhone cắt kết nối khi khóa màn hình / chuyển app mà thư viện MQTT không biết ngay. ESP32 gửi trạng thái
+// 15 giây một lần khi có người xem, nên quá 40 giây không nhận được gì = kết nối đã chết -> kết nối lại rồi mới gửi.
+async function mqReady(){if(mqc&&mqc.connected&&Date.now()-mqRx<40000)return true;
+ toast('Đang kết nối lại…',0);
+ if(Date.now()-mqRetry>12000){mqRetry=Date.now();mqConnect()}   // nhiều lệnh cùng lúc: chỉ kết nối lại 1 lần
+ for(let i=0;i<60;i++){await new Promise(r=>setTimeout(r,250));if(mqc&&mqc.connected){toast('Đã kết nối lại ✓');return true}}
+ return false}
+async function mqReq(op,body){const c=cfgGet();if(!await mqReady())return new Res(503,'Chưa kết nối được máy chủ MQTT');
  const id=hex(crypto.getRandomValues(new Uint8Array(8))),ts=Math.floor(Date.now()/1000),sig=await sign(c.key,id+'\n'+ts+'\n'+op+'\n'+body);
  return new Promise(res=>{pend[id]=res;mqc.publish('smartair/phone/req',JSON.stringify({id,ts,op,body,sig}));
-  setTimeout(()=>{if(pend[id]){delete pend[id];res(new Res(504,'ESP32 không trả lời (mất mạng, hoặc khóa ghép sai)'))}},20000)})}
+  setTimeout(()=>{if(pend[id]){delete pend[id];res(new Res(504,'ESP32 không trả lời (mất mạng, hoặc khóa ghép sai)'))}},10000)})}
 async function api(method,url,body){if(!MQ)return fetch(url,method=='GET'?undefined:{method,body});
  if(url=='/api/status'&&mqStat)return new Res(200,mqStat);   // trạng thái do ESP32 tự gửi, không tốn lượt hỏi
  return mqReq(OPS[method+' '+url],body||'')}
@@ -405,7 +412,7 @@ async function st(){let s;try{s=S=await j('/api/status')}catch(e){$('hdot').clas
  $('rsn').textContent=s.mold?'Đang chạy quạt chống mốc':s.paused?'Tự động đang tạm dừng':s.reason;
  $('ban').classList.toggle('on',!!s.paused);if(s.paused)$('bantx').textContent=s.reason;}
 function bump(d){const b=pendT!=null?pendT:S.acTemp;pendT=Math.max(T_MIN,Math.min(T_MAX,b+d));$('tset').textContent=pendT;setDial(pendT);
- clearTimeout(tmr);tmr=setTimeout(async()=>{const t=pendT;await cmd({on:true,temp:t});pendT=null;st()},1200)}
+ clearTimeout(tmr);tmr=setTimeout(async()=>{const t=pendT;await cmd({on:true,temp:t});pendT=null;st()},600)}
 // ---- Pop-up chung: chỉ di chuyển khối có sẵn vào pop-up rồi trả về chỗ cũ, nên mọi ô nhập giữ nguyên ----
 let shNode=null,shHome=null,shSave=null;
 function openSheet(title,node,onSave){closeSheet();shNode=node;shHome=node.parentNode;shSave=onSave;$('shT').textContent=title;
