@@ -319,7 +319,7 @@ const MODES={cool:'Làm lạnh',dry:'Hút ẩm',fan:'Quạt',auto:'Tự động'
 const MI={cool:'<path d="M12 2v20M4 6l16 12M20 6L4 18"/>',dry:'<path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/>',fan:'<circle cx="12" cy="12" r="2"/><path d="M12 10c0-5 4-7 5-4s-3 4-5 4M14 12c5 0 7 4 4 5s-4-3-4-5M12 14c0 5-4 7-5 4s3-4 5-4M10 12c-5 0-7-4-4-5s4 3 4 5"/>',auto:'<circle cx="12" cy="12" r="9"/><path d="M9 16l3-8 3 8M10 13.5h4"/>',heat:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>'};
 const FANS={quiet:'Êm',low:'Thấp',medium_low:'Vừa-thấp',medium:'Vừa',medium_high:'Vừa-cao',high:'Cao',strong:'Mạnh',auto:'Tự động'};
 const K=['autoOn','winStart','winEnd','offDays','offStart','offEnd','coolTemp','coolFan','boostT1','boostT2','dryByDew','dewOn','dewOff','dryOn','dryOff','dryFan','sleepOn','sleepStart','sleepEnd','moldOn','moldMin','away','awayMode','awayTemp','awayDryOn','autoAway','phones','awayAfter','pauseMin','gapMin','tgMode'];
-let S={fans:{}},C={},H=null,hrs=24,busy=0,pendT=null,tmr=null;
+let S={fans:{}},C={},H=null,hrs=24,busy=0,pendT=null,pendTo=0,tmr=null;
 // ---- Đường truyền: trong nhà gọi thẳng ESP32 (http); từ xa (GitHub Pages, https) đi qua MQTT ----
 const QS=new URLSearchParams(location.search),MQ_HOST='m261101e.ala.asia-southeast1.emqxsl.com';
 const MQ=location.protocol=='https:'||QS.has('mqurl'),MQ_URL=QS.get('mqurl')||'wss://'+MQ_HOST+':8084/mqtt';
@@ -400,6 +400,8 @@ async function st(){let s;try{s=S=await j('/api/status')}catch(e){$('hdot').clas
  const on=s.acOn,m=s.acMode,noT=m=='fan'||!s.acOk;
  $('sum').textContent=s.acOk?(on?(MODES[m]||m)+(noT?'':' · '+s.acTemp+'°C')+' · quạt '+(FANS[s.acFan]||s.acFan):'Đang tắt'):'Chưa rõ trạng thái';
  $('pwr').classList.toggle('on',!!on);
+ // Vừa gửi lệnh: giữ số mới cho tới khi trạng thái từ ESP32 khớp (tối đa 5 giây), tránh số giật về số cũ
+ if(pendT!=null&&pendTo&&(s.acTemp==pendT||Date.now()>pendTo)){pendT=null;pendTo=0}
  if(pendT==null){$('tset').textContent=noT?'--':s.acTemp;setDial(noT?T_MIN:s.acTemp)}
  $('dlab').textContent=m=='dry'?'HÚT ẨM':m=='fan'?'CHỈ QUẠT':'LÀM LẠNH ĐẾN';
  $('tm').disabled=$('tp').disabled=noT;
@@ -412,7 +414,7 @@ async function st(){let s;try{s=S=await j('/api/status')}catch(e){$('hdot').clas
  $('rsn').textContent=s.mold?'Đang chạy quạt chống mốc':s.paused?'Tự động đang tạm dừng':s.reason;
  $('ban').classList.toggle('on',!!s.paused);if(s.paused)$('bantx').textContent=s.reason;}
 function bump(d){const b=pendT!=null?pendT:S.acTemp;pendT=Math.max(T_MIN,Math.min(T_MAX,b+d));$('tset').textContent=pendT;setDial(pendT);
- clearTimeout(tmr);tmr=setTimeout(async()=>{const t=pendT;await cmd({on:true,temp:t});pendT=null;st()},600)}
+ clearTimeout(tmr);pendTo=0;tmr=setTimeout(async()=>{const t=pendT;await cmd({on:true,temp:t});if(pendT==t){pendTo=Date.now()+5000;st()}},600)}
 // ---- Pop-up chung: chỉ di chuyển khối có sẵn vào pop-up rồi trả về chỗ cũ, nên mọi ô nhập giữ nguyên ----
 let shNode=null,shHome=null,shSave=null;
 function openSheet(title,node,onSave){closeSheet();shNode=node;shHome=node.parentNode;shSave=onSave;$('shT').textContent=title;
@@ -509,7 +511,7 @@ async function sys(){const s=await j('/api/sys'),kb=v=>Math.round(v/1024)+' KB',
  const tl=[['🌡 Nhiệt độ chip',s.chipTemp.toFixed(1),'°C'],['🧠 RAM trống',Math.round(s.heapFree/1024),'KB'],['📶 WiFi',s.rssi,'dBm'],['⏱ Đã chạy',dur(s.uptime).replace(/ phút$/,'p').replace(/ giờ /,'g ').replace(/ ngày /,'n '),''],['🔄 Khởi động',s.boots,'lần'],['⚠ Treo / lỗi',s.crashes,'lần']];
  $('sysT').innerHTML=tl.map(t=>'<div class="tile"><small>'+t[0]+'</small><div'+(t[0].includes('Treo')&&s.crashes?' style="color:var(--red)"':'')+'>'+t[1]+'<i>'+t[2]+'</i></div></div>').join('');
  const r=[['Chip',s.chip+' · '+s.cpuMHz+' MHz'],['RAM trống / tổng',kb(s.heapFree)+' / '+kb(s.heapTotal)],['RAM trống thấp nhất',kb(s.heapMin)],['Khối RAM liền lớn nhất',kb(s.heapBlock)],...(s.psramTotal?[['PSRAM trống / tổng',kb(s.psramFree)+' / '+kb(s.psramTotal)]]:[]),
-  ['Flash',s.flashMB+' MB · code '+kb(s.sketch)+' · trống '+kb(s.sketchFree)],['Thời gian chạy',dur(s.uptime)],['Lý do khởi động gần nhất',s.resetReason],['Vòng lặp lâu nhất',s.loopMaxMs+' ms'],['Stack vòng lặp còn trống',s.stackFree+' byte'+(s.stackFree<2048?' ⚠':'')],
+  ['Flash',s.flashMB+' MB · code '+kb(s.sketch)+' · trống '+kb(s.sketchFree)],['Thời gian chạy',dur(s.uptime)],['Lý do khởi động gần nhất',s.resetReason],['Vòng lặp lâu nhất',s.loopMaxMs+' ms'+(s.slowStep?' · chậm nhất: '+s.slowStep+' '+s.slowMs+' ms':'')],['Stack vòng lặp còn trống',s.stackFree+' byte'+(s.stackFree<2048?' ⚠':'')],
   ['WiFi',s.ssid+' · kênh '+s.channel+' · '+s.rssi+' dBm'],['Địa chỉ IP',s.ip+(s.mdns?' · <a href="http://'+s.mdns+'">'+s.mdns+'</a>':'')],['MAC',s.mac],['Số lần mất WiFi',s.wifiDrops],
     ['CGDK2: số gói nhận',s.blePackets],['CGDK2 gần nhất',ago(s.bleAgo)],['Bộ nhớ lưu (flash)',s.fsOk?kb(s.fsUsed)+' / '+kb(s.fsTotal):'Lỗi – chỉ lưu trong RAM'],['Bản firmware',s.build]];
  const row=x=>'<div class="row"><span>'+x[0]+'</span><span class="v">'+x[1]+'</span></div>',f1=v=>v==null?'--':(+v).toFixed(1);
