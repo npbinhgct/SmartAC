@@ -342,7 +342,7 @@ function mqConnect(){const c=cfgGet();if(!c.pass||!c.key){showSetup(qrGot?'Đã 
  mqc.on('connect',()=>{mqRx=Date.now();mqRetry=0;$('setup').classList.remove('on');mqc.subscribe(['smartair/esp/status','smartair/esp/online','smartair/esp/resp/#']);
   mqReq('watch','');if(!booted){booted=true;boot()}});
  mqc.on('message',(t,p)=>{mqRx=Date.now();const s=p.toString();
-  if(t=='smartair/esp/status'){mqStat=s;st()}else if(t=='smartair/esp/online'){mqOn=s=='1';st()}
+  if(t=='smartair/esp/status'){mqStat=s;try{lanSeen(JSON.parse(s).ip)}catch(e){}st()}else if(t=='smartair/esp/online'){mqOn=s=='1';st()}
   else if(t.startsWith('smartair/esp/resp/')){const q=t.split('/'),r=pend[q[3]];if(r){delete pend[q[3]];r(new Res(+q[4],s))}}});
  mqc.on('error',e=>{if(/auth|authori[sz]ed|bad user|password/i.test(e.message)){mqc.end(true);showSetup('Máy chủ từ chối: sai mật khẩu MQTT')}});
  mqc.on('offline',()=>st());
@@ -358,7 +358,18 @@ async function mqReq(op,body){const c=cfgGet();if(!await mqReady())return new Re
  const id=hex(crypto.getRandomValues(new Uint8Array(8))),ts=Math.floor(Date.now()/1000),sig=await sign(c.key,id+'\n'+ts+'\n'+op+'\n'+body);
  return new Promise(res=>{pend[id]=res;mqc.publish('smartair/phone/req',JSON.stringify({id,ts,op,body,sig}));
   setTimeout(()=>{if(pend[id]){delete pend[id];res(new Res(504,'ESP32 không trả lời (mất mạng, hoặc khóa ghép sai)'))}},10000)})}
+// ---- App Android: ở nhà gọi thẳng ESP32 qua WiFi (app làm hộ, trang https không gọi được http trong nhà) ----
+// ESP32 gửi IP của nó trong trạng thái qua MQTT; gọi được IP đó trong 1,5 giây = đang ở nhà.
+const LAN=window.AndroidLan||null;let lanIp='',lanOk=false,lanPend={},lanSeq=0,lanBusy=false;
+try{lanIp=localStorage.getItem('lanIp')||''}catch(e){}
+window.lanCb=(id,code,b)=>{const r=lanPend[id];if(r){delete lanPend[id];r(new Res(code,b))}};
+function lanReq(method,path,body,ms){return new Promise(res=>{const id=++lanSeq;lanPend[id]=res;LAN.req(id,method,'http://'+lanIp+path,body||'',ms||5000)})}
+async function lanProbe(){if(!LAN||!lanIp||lanBusy)return;lanBusy=true;
+ const r=await lanReq('GET','/api/status','',1500);lanBusy=false;
+ if(r.ok!==lanOk){lanOk=r.ok;st()}}
+function lanSeen(ip){if(!LAN||!ip||ip==lanIp)return;lanIp=ip;try{localStorage.setItem('lanIp',ip)}catch(e){}lanProbe()}
 async function api(method,url,body){if(!MQ)return fetch(url,method=='GET'?undefined:{method,body});
+ if(lanOk){const r=await lanReq(method,url,body);if(r.status>0)return r;lanOk=false}   // mất WiFi nhà: chuyển sang MQTT
  if(url=='/api/status'&&mqStat)return new Res(200,mqStat);   // trạng thái do ESP32 tự gửi, không tốn lượt hỏi
  return mqReq(OPS[method+' '+url],body||'')}
 $('sSave').onclick=()=>{const pass=$('sPass').value,key=$('sKey').value.trim().toLowerCase();
@@ -384,7 +395,8 @@ function chips(el,list,cur,lab,cls,click){const k=list.join()+'|'+cur;if(el._k==
 async function st(){let s;try{s=S=await j('/api/status')}catch(e){$('hdot').className='dot off';
  $('htx').textContent=!MQ?'Mất kết nối ESP32':!mqc||!mqc.connected?'Đang kết nối máy chủ…':mqOn===false?'ESP32 ngoại tuyến':'Đang chờ ESP32…';return}
  $('sban').classList.toggle('on',!!s.safeMode);$('hdot').className='dot'+(s.acOk?'':' off');$('htx').innerHTML='Trực tuyến'+'<span id="htm"> · '+s.time+'</span>';if(s.limitSec>0)$('hdot').className='dot off';
- if(MQ){const off=!mqc||!mqc.connected||mqOn===false;$('htx').innerHTML=(off?'ESP32 ngoại tuyến · số liệu lúc '+s.time:'Từ xa · trực tuyến<span id="htm"> · '+s.time+'</span>');if(off)$('hdot').className='dot off'}
+ if(MQ&&lanOk)$('htx').innerHTML='Trong nhà · WiFi<span id="htm"> · '+s.time+'</span>';
+ else if(MQ){const off=!mqc||!mqc.connected||mqOn===false;$('htx').innerHTML=(off?'ESP32 ngoại tuyến · số liệu lúc '+s.time:'Từ xa · trực tuyến<span id="htm"> · '+s.time+'</span>');if(off)$('hdot').className='dot off'}
  $('hsrc').textContent=(s.acOk?(s.acOn?'Đang chạy · ':'Đang tắt · '):'')+'Nguồn đo '+s.src;
  $('vt').innerHTML=f1(s.t)+'<i>°C</i>';$('vh').innerHTML=f0(s.rh)+'<i>%</i>';$('vf').innerHTML=f1(s.feels)+'<i>°C</i>';
  $('vd').innerHTML=f1(s.dew)+'<i>°C</i>';$('vb').innerHTML=(s.batt>=0?s.batt:'--')+'<i>%</i>';$('vday').textContent=today();
@@ -558,4 +570,7 @@ else boot();
 setInterval(()=>{if(!busy)st()},5000);
 setInterval(()=>{const p=location.hash.slice(1);if(p=='log')lg();if(p=='sys')sys()},15000);
 setInterval(hist,300000);
+// App Android: vào lại app hoặc mỗi 30 giây thì dò lại WiFi nhà (về tới nhà là tự chuyển)
+if(MQ&&LAN){if(lanIp)lanProbe().then(()=>{if(lanOk&&!booted){booted=true;boot()}});
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)lanProbe()});setInterval(()=>{if(!lanOk)lanProbe()},30000)}
 </script></body></html>
