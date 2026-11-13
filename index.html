@@ -49,6 +49,7 @@ nav a.on{color:var(--accT);border-color:var(--accT);font-weight:600}
 .ctr .big{font-size:72px;font-weight:300;line-height:1;margin:4px 0 6px}
 .ctr .big sup{font-size:22px;vertical-align:top;margin-left:2px}
 .pm{display:flex;justify-content:space-between;width:290px;margin:-34px auto 0;position:relative;z-index:1}
+.rb.dim{opacity:.4}
 .rb{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--tx);font-size:24px;cursor:pointer;box-shadow:var(--sh)}
 .rb:disabled{opacity:.35}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
@@ -399,7 +400,7 @@ async function st(){let s;try{s=S=await j('/api/status')}catch(e){$('hdot').clas
  if(pendT!=null&&pendTo&&(s.acTemp==pendT||Date.now()>pendTo)){pendT=null;pendTo=0}
  if(pendT==null){$('tset').textContent=noT?'--':s.acTemp;setDial(noT?T_MIN:s.acTemp)}
  $('dlab').textContent=m=='dry'?'HÚT ẨM':m=='fan'?'CHỈ QUẠT':'LÀM LẠNH ĐẾN';
- $('tm').disabled=$('tp').disabled=noT;
+ $('tm').classList.toggle('dim',noT);$('tp').classList.toggle('dim',noT);   // vẫn bấm được để báo lý do
  const ml=Object.keys(MODES).filter(k=>s.fans[k]);
  chips($('modes'),ml.length?ml:['cool','dry','fan'],on?m:'',MODES,'',v=>cmd({on:true,mode:v}));
  chips($('fans'),s.fans[m]||[],s.acFan,FANS,'fan',v=>{closeSheet();cmd({on:true,fan:v})});
@@ -408,7 +409,8 @@ async function st(){let s;try{s=S=await j('/api/status')}catch(e){$('hdot').clas
  if(sw)chips($('swing'),['on','off'],s.swingOn?'on':'off',{on:'Đảo',off:'Dừng'},'fan',v=>cmd({swing:v}));
  $('rsn').textContent=s.mold?'Đang chạy quạt chống mốc':s.paused?'Tự động đang tạm dừng':s.reason;
  $('ban').classList.toggle('on',!!s.paused);if(s.paused)$('bantx').textContent=s.reason;}
-function bump(d){const b=pendT!=null?pendT:S.acTemp;pendT=Math.max(T_MIN,Math.min(T_MAX,b+d));$('tset').textContent=pendT;setDial(pendT);
+function bump(d){if(!S.acOk||S.acMode=='fan'){toast(S.acMode=='fan'?'Chế độ Quạt không đặt được nhiệt độ: chọn Làm lạnh hoặc Hút ẩm':'Chưa rõ trạng thái máy lạnh',3500);return}
+ const b=pendT!=null?pendT:S.acTemp;pendT=Math.max(T_MIN,Math.min(T_MAX,b+d));$('tset').textContent=pendT;setDial(pendT);
  clearTimeout(tmr);pendTo=0;tmr=setTimeout(async()=>{const t=pendT;await cmd({on:true,temp:t});if(pendT==t){pendTo=Date.now()+5000;st()}},600)}
 // ---- Pop-up chung: chỉ di chuyển khối có sẵn vào pop-up rồi trả về chỗ cũ, nên mọi ô nhập giữ nguyên ----
 let shNode=null,shHome=null,shSave=null;
