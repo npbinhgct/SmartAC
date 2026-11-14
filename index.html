@@ -42,15 +42,21 @@ nav a.on{color:var(--accT);border-color:var(--accT);font-weight:600}
 .sum{color:var(--blue);font-weight:600;font-size:16px;margin-top:3px}
 .pwr{position:absolute;right:20px;top:18px;width:50px;height:50px;border-radius:50%;border:0;background:var(--chip);color:var(--mut);cursor:pointer;display:grid;place-items:center;transition:.2s}
 .pwr.on{background:var(--accT);color:var(--onAcc);box-shadow:0 6px 18px rgba(31,191,156,.4)}
-.dial{position:relative;width:280px;margin:6px auto 0}
-.dial svg{display:block;width:100%}
-.dial .ctr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
-.ctr small{font-size:11.5px;letter-spacing:1.3px;color:var(--mut);font-weight:600}
-.ctr .big{font-size:72px;font-weight:300;line-height:1;margin:4px 0 6px}
-.ctr .big sup{font-size:22px;vertical-align:top;margin-left:2px}
-.pm{display:flex;justify-content:space-between;width:290px;margin:-34px auto 0;position:relative;z-index:1}
+.dial{position:relative;width:280px;height:256px;margin:6px auto 0}
+.dial svg{display:block;width:280px;height:256px}
+.dial .ctr{position:absolute;left:0;top:0;width:280px;height:280px;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.ctr small{font-size:11px;letter-spacing:1.3px;color:var(--mut);font-weight:600}
+.ctr .big{font-size:76px;font-weight:600;line-height:1;letter-spacing:-2px;margin-top:4px;font-variant-numeric:tabular-nums}
+.ctr .big sup{font-size:21px;font-weight:500;letter-spacing:0;color:var(--mut);vertical-align:top;position:relative;top:8px;margin-left:4px}
+.rng{position:absolute;left:0;top:229px;width:280px;display:flex;align-items:center;justify-content:center;font-size:13.5px;color:var(--mut);pointer-events:none}
+.rng i{width:8px;height:8px;border-radius:50%;background:var(--org);margin-right:6px}
+.rng b{position:absolute;top:1px;width:30px;text-align:center;font-size:11px;font-weight:400;font-variant-numeric:tabular-nums}
+#tlo{left:44px}#thi{left:206px}
+.pm{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:320px;margin:12px auto 0}
 .rb.dim{opacity:.4}
-.rb{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--tx);font-size:24px;cursor:pointer;box-shadow:var(--sh)}
+.rb{height:52px;border-radius:14px;border:1px solid var(--line);background:var(--chip);color:var(--tx);font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;padding:0}
+.rb svg{width:20px;height:20px}
+.rb:active{background:var(--line)}
 .rb:disabled{opacity:.35}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:10px;border:1px solid var(--line);background:var(--chip);color:var(--tx);font-size:14.5px;cursor:pointer;transition:.15s}
@@ -189,12 +195,13 @@ nav a{display:flex;align-items:center;gap:7px}
   <div class="cap" style="margin-top:0">Máy lạnh</div>
   <div class="sum" id="sum">--</div>
   <button class="pwr" id="pwr" title="Bật / tắt"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></svg></button>
-  <div class="dial"><svg viewBox="0 0 240 240"><circle cx="120" cy="120" r="96" fill="none" stroke="var(--line)" stroke-width="14" stroke-linecap="round" stroke-dasharray="452.4 603.2" transform="rotate(135 120 120)"/>
-   <circle id="arc" cx="120" cy="120" r="96" fill="none" stroke="url(#gr)" stroke-width="14" stroke-linecap="round" stroke-dasharray="0 603.2" transform="rotate(135 120 120)" style="transition:.4s"/>
-   <circle id="knob" r="11" fill="#fff" stroke="var(--blue)" stroke-width="4" cx="0" cy="0" style="transition:.4s"/>
-   <defs><linearGradient id="gr" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#5aa9f7"/><stop offset="1" stop-color="#2f8cf0"/></linearGradient></defs></svg>
-   <div class="ctr"><small id="dlab">ĐẶT NHIỆT ĐỘ</small><div class="big"><span id="tset">--</span><sup>°C</sup></div><span style="color:var(--mut)">Phòng <span id="tnow">--</span>°C</span></div></div>
-  <div class="pm"><button class="rb" id="tm">−</button><button class="rb" id="tp">+</button></div>
+  <div class="dial"><svg viewBox="0 0 280 256" aria-hidden="true"><g fill="none" stroke-width="12" transform="rotate(136.5 140 140)"><circle id="arcBg" cx="140" cy="140" r="112" stroke="var(--line)"/>
+   <circle id="arc" cx="140" cy="140" r="112" stroke="var(--blue)" opacity=".4" stroke-dasharray="0 703.72"/>
+   <circle id="arcNow" cx="140" cy="140" r="112" stroke="var(--blue)" stroke-dasharray="0 703.72"/></g>
+   <circle id="rdot" r="4" fill="var(--org)" style="display:none"/></svg>
+   <div class="ctr"><small id="dlab">ĐẶT NHIỆT ĐỘ</small><div class="big"><span id="tset">--</span><sup>°C</sup></div></div>
+   <div class="rng"><b id="tlo"></b><i></i><span>Phòng <span id="tnow">--</span>°C</span><b id="thi"></b></div></div>
+  <div class="pm"><button class="rb" id="tm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>Giảm</button><button class="rb" id="tp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Tăng</button></div>
   <div class="cap">Chế độ</div><div class="chips" id="modes"></div>
   <div class="fs" id="fs"><button class="fbtn" id="fanBtn"><span><small>Tốc độ quạt</small><b id="fanNow">--</b></span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
    <div class="swb" id="swb"><small>Cánh gió</small><div class="chips" id="swing"></div></div></div>
@@ -387,8 +394,18 @@ const f1=v=>v==null?'--':(+v).toFixed(1),f0=v=>v==null?'--':Math.round(v);
 // Mã thời tiết WMO (Open-Meteo)
 const wxIco=c=>c==0?'☀':c<=2?'⛅':c==3?'☁':c==45||c==48?'🌫':c>=95?'⛈':c>=51?'🌧':'☁';
 const wxTxt=c=>c==0?'Trời quang':c<=2?'Ít mây':c==3?'Nhiều mây':c==45||c==48?'Sương mù':c>=51&&c<=57?'Mưa phùn':c>=61&&c<=67?'Mưa':c>=80&&c<=82?'Mưa rào':c>=95?'Dông':'--';
-function setDial(t){const f=Math.max(0,Math.min(1,(t-T_MIN)/(T_MAX-T_MIN)));$('arc').setAttribute('stroke-dasharray',(452.4*f)+' 603.2');
- const a=(135+270*f)*Math.PI/180;$('knob').setAttribute('cx',120+96*Math.cos(a));$('knob').setAttribute('cy',120+96*Math.sin(a))}
+// Vòng nhiệt độ chia nấc: mỗi độ một nấc, từ T_MIN đến T_MAX. Vòng tròn bán kính 112 (chu vi DC), cung 270 độ, khe giữa các nấc DG.
+const DN=T_MAX-T_MIN+1,DC=703.72,DG=6,DS=DC*.75/DN,DSG=(DS-DG).toFixed(2);
+function dialSegs(n){let p='';for(let i=1;i<n;i++)p+=DSG+' '+DG+' ';return p+DSG+' '+(DC-n*DS+DG).toFixed(2)}
+// t = nhiệt độ đặt (NaN: không sáng nấc nào). Các nấc trước sáng mờ, nấc đang đặt sáng rõ.
+function setDial(t){const n=isNaN(t)?0:Math.max(1,Math.min(DN,Math.round(t)-T_MIN+1));
+ $('arc').setAttribute('stroke-dasharray',n>1?dialSegs(n-1):'0 '+DC);
+ $('arcNow').setAttribute('stroke-dasharray',n?'0 '+((n-1)*DS).toFixed(2)+' '+DSG+' '+DC:'0 '+DC)}
+// Chấm cam: nhiệt độ phòng đang đo, đặt sát mép trong của vòng (ngoài khoảng T_MIN..T_MAX thì nằm ở đầu vòng)
+function setRoom(t){const d=$('rdot');if(t==null||isNaN(t)){d.style.display='none';return}
+ const c=Math.max(T_MIN-.5,Math.min(T_MAX+.5,+t)),a=(136.5+((c-T_MIN)*DS+(DS-DG)/2)/DC*360)*Math.PI/180;
+ d.setAttribute('cx',(140+96*Math.cos(a)).toFixed(1));d.setAttribute('cy',(140+96*Math.sin(a)).toFixed(1));d.style.display=''}
+$('arcBg').setAttribute('stroke-dasharray',dialSegs(DN));$('tlo').textContent=T_MIN;$('thi').textContent=T_MAX;
 function chips(el,list,cur,lab,cls,click){const k=list.join()+'|'+cur;if(el._k==k)return;el._k=k;
  el.innerHTML=list.map(m=>'<button class="chip '+cls+(m==cur?' on':'')+'" data-v="'+m+'">'+(MI[m]&&cls!='fan'?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+MI[m]+'</svg>':'')+(lab[m]||m)+'</button>').join('');
  el.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{el.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x==b));click(b.dataset.v)})}
@@ -404,13 +421,13 @@ async function st(){let s;try{s=S=await j('/api/status')}catch(e){$('hdot').clas
  if(o){const rain=(o.code>=51&&o.code<=99)||o.rain>0;$('wx').classList.toggle('rain',rain);$('wxI').textContent=wxIco(o.code);
   $('wxT').textContent='Ngoài trời '+f1(o.t)+'°C · '+f0(o.rh)+'% · '+wxTxt(o.code);
   $('wxD').textContent='Hôm nay '+f0(o.tmin)+' – '+f0(o.tmax)+'°C · Phú Định'+(o.ago>3600?' · cập nhật '+Math.round(o.ago/60)+' phút trước':'')}
- $('tnow').textContent=f1(s.t);if($('presSt'))$('presSt').textContent=presTxt(s.pres);
+ $('tnow').textContent=f1(s.t);setRoom(s.t);if($('presSt'))$('presSt').textContent=presTxt(s.pres);
  const on=s.acOn,m=s.acMode,noT=m=='fan'||!s.acOk;
  $('sum').textContent=s.acOk?(on?(MODES[m]||m)+(noT?'':' · '+s.acTemp+'°C')+' · quạt '+(FANS[s.acFan]||s.acFan):'Đang tắt'):'Chưa rõ trạng thái';
  $('pwr').classList.toggle('on',!!on);
  // Vừa gửi lệnh: giữ số mới cho tới khi trạng thái từ ESP32 khớp (tối đa 5 giây), tránh số giật về số cũ
  if(pendT!=null&&pendTo&&(s.acTemp==pendT||Date.now()>pendTo)){pendT=null;pendTo=0}
- if(pendT==null){$('tset').textContent=noT?'--':s.acTemp;setDial(noT?T_MIN:s.acTemp)}
+ if(pendT==null){$('tset').textContent=noT?'--':s.acTemp;setDial(noT?NaN:s.acTemp)}
  $('dlab').textContent=m=='dry'?'HÚT ẨM':m=='fan'?'CHỈ QUẠT':'LÀM LẠNH ĐẾN';
  $('tm').classList.toggle('dim',noT);$('tp').classList.toggle('dim',noT);   // vẫn bấm được để báo lý do
  const ml=Object.keys(MODES).filter(k=>s.fans[k]);
