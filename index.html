@@ -290,11 +290,10 @@ nav a{display:flex;align-items:center;gap:7px}
 
 <section class="pg" id="p-sys">
  <div class="card"><div class="in"><div class="tiles" id="sysT"></div></div></div>
- <div class="card" id="sysR"></div>
  <div class="card" id="sysP"></div>
  <div class="card" id="sysC"></div>
- <div class="card" id="sysL"></div>
- <small style="color:var(--mut)">Thử cơ chế báo lỗi: cắm USB, mở Serial Monitor (115200), gõ <b>CRASHTEST</b> (cố ý lỗi) hoặc <b>TREOTEST</b> (cố ý treo, chờ watchdog 60 giây).</small>
+ <div class="card" id="sysR"></div>
+ <details class="card" id="sysD"><summary style="padding:15px 20px;cursor:pointer;font-weight:600">🔧 Chi tiết kỹ thuật</summary><div id="sysL"></div></details>
 </section>
 </main>
 <div class="ov" id="setup"><div class="card"><div class="in">
@@ -532,26 +531,26 @@ cvE.onmousemove=mv;cvE.ontouchmove=e=>{mv(e)};cvE.ontouchstart=mv;cvE.onmouselea
 $('rng').querySelectorAll('a').forEach(a=>a.onclick=()=>{$('rng').querySelectorAll('a').forEach(x=>x.classList.toggle('on',x==a));hrs=+a.dataset.h;draw()});
 const dur=s=>{const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);return (d?d+' ngày ':'')+h+' giờ '+m+' phút'};
 async function sys(){const s=await j('/api/sys'),kb=v=>Math.round(v/1024)+' KB',ago=v=>v<0?'chưa có':v+' giây trước';
- const tl=[['🌡 Nhiệt độ chip',s.chipTemp.toFixed(1),'°C'],['🧠 RAM trống',Math.round(s.heapFree/1024),'KB'],['📶 WiFi',s.rssi,'dBm'],['⏱ Đã chạy',dur(s.uptime).replace(/ phút$/,'p').replace(/ giờ /,'g ').replace(/ ngày /,'n '),''],['🔄 Khởi động',s.boots,'lần'],['⚠ Treo / lỗi',s.crashes,'lần']];
+ const tl=[['🌡 Nhiệt độ chip',s.chipTemp.toFixed(1),'°C'],['🧠 RAM trống',Math.round(s.heapFree/1024),'KB'],['📉 RAM thấp nhất',Math.round(s.heapMin/1024),'KB'],['📶 WiFi',s.rssi,'dBm'],['⏱ Đã chạy',dur(s.uptime).replace(/ phút$/,'p').replace(/ giờ /,'g ').replace(/ ngày /,'n '),''],['⚠ Treo / lỗi',s.crashes,'lần']];
  $('sysT').innerHTML=tl.map(t=>'<div class="tile"><small>'+t[0]+'</small><div'+(t[0].includes('Treo')&&s.crashes?' style="color:var(--red)"':'')+'>'+t[1]+'<i>'+t[2]+'</i></div></div>').join('');
- const r=[['Chip',s.chip+' · '+s.cpuMHz+' MHz'],['RAM trống / tổng',kb(s.heapFree)+' / '+kb(s.heapTotal)],['RAM trống thấp nhất',kb(s.heapMin)],['Khối RAM liền lớn nhất',kb(s.heapBlock)],...(s.psramTotal?[['PSRAM trống / tổng',kb(s.psramFree)+' / '+kb(s.psramTotal)]]:[]),
-  ['Flash',s.flashMB+' MB · code '+kb(s.sketch)+' · trống '+kb(s.sketchFree)],['Thời gian chạy',dur(s.uptime)],['Lý do khởi động gần nhất',s.resetReason],['Vòng lặp lâu nhất',s.loopMaxMs+' ms'+(s.slowStep?' · chậm nhất: '+s.slowStep+' '+s.slowMs+' ms':'')],['Stack vòng lặp còn trống',s.stackFree+' byte'+(s.stackFree<2048?' ⚠':'')],
-  ['WiFi',s.ssid+' · kênh '+s.channel+' · '+s.rssi+' dBm'],['Địa chỉ IP',s.ip+(s.mdns?' · <a href="http://'+s.mdns+'">'+s.mdns+'</a>':'')],['MAC',s.mac],['Số lần mất WiFi',s.wifiDrops],
-    ['CGDK2: số gói nhận',s.blePackets],['CGDK2 gần nhất',ago(s.bleAgo)],['Bộ nhớ lưu (flash)',s.fsOk?kb(s.fsUsed)+' / '+kb(s.fsTotal):'Lỗi – chỉ lưu trong RAM'],['Bản firmware',s.build]];
  const row=x=>'<div class="row"><span>'+x[0]+'</span><span class="v">'+x[1]+'</span></div>',f1=v=>v==null?'--':(+v).toFixed(1);
  const mode=s.safeMode?'<b style="color:var(--red)">Chế độ an toàn</b>':s.tempWarm?'<b style="color:var(--org)">Chip nóng – đang hạ CPU '+s.cpuNow+' MHz</b>':'<b style="color:var(--acc)">Bình thường ✓</b>';
- $('sysP').innerHTML='<div class="hd"><h3>🛡 Bảo vệ</h3></div>'+[['Trạng thái',mode],['Lỗi / treo liên tiếp',s.streak+' lần (từ 3 lần → chế độ an toàn)'],['Đang làm',s.step],['RAM thấp nhất xảy ra lúc',s.heapMinStep+' ('+kb(s.heapMin)+')'],
-  ['Nhiệt độ chip cao nhất',f1(s.tempMaxRun)+' °C lần chạy này · '+f1(s.tempMaxAll)+' °C từ trước tới nay'],['Ngưỡng nhiệt','≥ '+s.tempWarmC+' °C hạ CPU · ≥ '+s.tempHotC+' °C ngủ 5 phút cho nguội'],['Số lần quá nhiệt',s.hotCount],['CPU hiện tại',s.cpuNow+' MHz']].map(row).join('');
+ $('sysP').innerHTML='<div class="hd"><h3>🛡 Tình trạng</h3></div>'+[['Trạng thái',mode],['Lần khởi động gần nhất do',s.resetReason],['Nhiệt độ chip cao nhất',f1(s.tempMaxRun)+' °C (từ trước tới nay '+f1(s.tempMaxAll)+' °C)'],
+  ['Cảm biến CGDK2',ago(s.bleAgo)],['Địa chỉ',s.ip+(s.mdns?' · <a href="http://'+s.mdns+'">'+s.mdns+'</a>':'')],['Bản firmware',s.build]].map(row).join('');
  const c=s.crash;
- $('sysC').innerHTML='<div class="hd"><h3>💥 Sự cố gần nhất</h3>'+(c?'<button class="btn" id="cclr" style="margin-left:auto">Đã xem, xóa</button>':'')+'</div>'+(c?[['Lần khởi động',c.boot],['Lý do',c.reason],['Lúc đang',c.step],['Tác vụ',c.task||'--'],
-  ['Lỗi',(c.cause||'')+(c.mcause!=null?' (mcause '+c.mcause+')':'')],['Địa chỉ lệnh (PC)',c.pc||'--'],['Trả về (RA)',c.ra||'--'],['Stack (SP)',c.sp||'--'],['MTVAL',c.mtval||'--'],
-  ['Địa chỉ trong stack',c.bt||'--'],['Tác vụ treo (watchdog)',c.wdtTasks||'--'],['Mã ELF',c.elf||'--']].map(row).join('')
+ $('sysC').innerHTML='<div class="hd"><h3>💥 Sự cố gần nhất</h3>'+(c?'<button class="btn" id="cclr" style="margin-left:auto">Đã xem, xóa</button>':'')+'</div>'+(c?[['Lý do',c.reason],['Lúc đang',c.step],['Lần khởi động thứ',c.boot]].map(row).join('')+
+  (s.coreDump?'<div class="row"><div><div class="t">Bản ghi lỗi đầy đủ</div><div class="d">Tải về rồi gửi cho Claude để tìm nguyên nhân</div></div><a class="btn" href="/api/coredump" download="coredump.bin">Tải về</a></div>':'')
   :'<div class="row"><span>Chưa có sự cố nào</span><span class="v">✓</span></div>');
- if(c)$('cclr').onclick=async()=>{await post('/api/crashclear',{});sys()};
+ if(c)$('cclr').onclick=async()=>{if(s.coreDump&&!confirm('Xóa luôn bản ghi lỗi đầy đủ? Nên tải về trước.'))return;await post('/api/crashclear',{});sys()};
+ const r=[['Chip',s.chip+' · '+s.cpuMHz+' MHz (hiện tại '+s.cpuNow+' MHz)'],['RAM trống / tổng',kb(s.heapFree)+' / '+kb(s.heapTotal)],['RAM thấp nhất xảy ra lúc',s.heapMinStep+' ('+kb(s.heapMin)+')'],['Khối RAM liền lớn nhất',kb(s.heapBlock)],...(s.psramTotal?[['PSRAM trống / tổng',kb(s.psramFree)+' / '+kb(s.psramTotal)]]:[]),
+  ['Flash',s.flashMB+' MB · code '+kb(s.sketch)+' · trống '+kb(s.sketchFree)],['Bộ nhớ lưu (flash)',s.fsOk?kb(s.fsUsed)+' / '+kb(s.fsTotal):'Lỗi – chỉ lưu trong RAM'],['Thời gian chạy',dur(s.uptime)],['Số lần khởi động',s.boots],
+  ['Lỗi / treo liên tiếp',s.streak+' lần (từ 3 lần → chế độ an toàn)'],['Đang làm',s.step],['Vòng lặp lâu nhất',s.loopMaxMs+' ms'+(s.slowStep?' · chậm nhất: '+s.slowStep+' '+s.slowMs+' ms':'')],['Stack vòng lặp còn trống',s.stackFree+' byte'+(s.stackFree<2048?' ⚠':'')],
+  ['Ngưỡng nhiệt','≥ '+s.tempWarmC+' °C hạ CPU · ≥ '+s.tempHotC+' °C ngủ 5 phút cho nguội'],['Số lần quá nhiệt',s.hotCount],
+  ['WiFi',s.ssid+' · kênh '+s.channel+' · '+s.rssi+' dBm'],['MAC',s.mac],['Số lần mất WiFi',s.wifiDrops],['CGDK2: số gói nhận',s.blePackets],
+  ...(c?[['Sự cố: tác vụ',c.task||'--'],['Sự cố: lỗi',(c.cause||'')+(c.mcause!=null?' (mcause '+c.mcause+')':'')||'--'],['Sự cố: PC',c.pc||'--'],['Sự cố: địa chỉ trong stack',c.bt||'--'],['Sự cố: tác vụ treo',c.wdtTasks||'--'],['Sự cố: mã ELF',c.elf||'--']]:[])];
  const rr=[['Máy chủ MQTT',s.mqttHost],['Trạng thái',!s.mqttOn?'<b style="color:var(--org)">Chưa bật</b> – thêm MQTT_USER / MQTT_PASS vào secrets.h':s.mqttOk?'<b style="color:var(--acc)">Đã kết nối ✓</b>':'<b style="color:var(--red)">Chưa kết nối</b>'],
-  ['Số lần kết nối',s.mqttConnects],['Lệnh từ xa hợp lệ / bị từ chối',s.mqttReqOk+' / '+s.mqttReqBad+(s.mqttReject?' · gần nhất: '+s.mqttReject:'')],['Điện thoại xem gần nhất',ago(s.mqttWatchAgo)],
   ['Telegram',!s.tgOn?'<b style="color:var(--org)">Chưa cài</b> – thêm TELEGRAM_TOKEN / TELEGRAM_CHAT_ID vào secrets.h':['Tắt','Chỉ khi vắng nhà','Luôn luôn'][s.tgMode]+' · đã gửi '+s.tgSent+' · lỗi '+s.tgFail+(s.tgQueue?' · chờ gửi '+s.tgQueue:'')+(s.tgErr?' · <span style="color:var(--red)">'+s.tgErr+'</span>':'')]];
- if(s.irOn)rr.push(['Hồng ngoại (remote gốc)',s.irProto?s.irProto+' · đã phát '+s.irTx+' · nhận '+s.irRx:'<b style="color:var(--org)">Chưa học</b> – bấm remote gốc 1 lần'],['Bấm remote gốc gần nhất',s.irLast||'--'],
+ if(s.irOn)rr.push(['Hồng ngoại (remote gốc)',s.irProto?s.irProto+' · đã phát '+s.irTx+' · nhận '+s.irRx:'<b style="color:var(--org)">Chưa học</b> – bấm remote gốc 1 lần'],
   ['Thử phát hồng ngoại','<button class="btn" id="irT"'+(s.irProto?'':' disabled')+'>Phát thử</button>']);
  $('sysR').innerHTML='<div class="hd"><h3>📡 Điều khiển từ xa</h3></div>'+rr.map(row).join('')+(MQ
   ?'<div class="row"><span>Mật khẩu MQTT / khóa ghép trên máy này</span><button class="btn" id="rcfg">Đổi</button></div>'
@@ -565,7 +564,9 @@ async function sys(){const s=await j('/api/sys'),kb=v=>Math.round(v/1024)+' KB',
   $('pkShow').onclick=async()=>{const k=await j('/api/pairkey');$('pk').textContent=k.key;qr(k.key);const rg=document.createRange();rg.selectNodeContents($('pk'));const se=getSelection();se.removeAllRanges();se.addRange(rg);
    let ok=false;try{ok=document.execCommand('copy')}catch(e){}toast(ok?'Đã chép khóa ghép':'Đã chọn sẵn khóa, giữ để chép')};
   $('pkNew').onclick=async()=>{if(!confirm('Tạo khóa ghép mới? Mọi điện thoại đang điều khiển từ xa sẽ phải nhập lại khóa.'))return;const k=await (await fetch('/api/pairkey/new',{method:'POST'})).json();$('pk').textContent=k.key;qr(k.key);toast('Đã tạo khóa mới')}}
- $('sysL').innerHTML='<div class="hd"><h3>ⓘ Thông tin thiết bị</h3></div>'+r.map(row).join('')}
+ r.push(['MQTT: số lần kết nối',s.mqttConnects],['Lệnh từ xa hợp lệ / bị từ chối',s.mqttReqOk+' / '+s.mqttReqBad+(s.mqttReject?' · gần nhất: '+s.mqttReject:'')],['Điện thoại xem gần nhất',ago(s.mqttWatchAgo)]);
+ if(s.irOn)r.push(['Bấm remote gốc gần nhất',s.irLast||'--']);
+ $('sysL').innerHTML=r.map(row).join('')}
 const TABS=['ctl','his','log','set','sys'];let curTab='',slideDir='';
 function tab(p){if(!TABS.includes(p))p='ctl';document.querySelectorAll('.pg').forEach(e=>{e.classList.toggle('on',e.id=='p-'+p);e.classList.remove('sl','sr')});
  const pg=$('p-'+p);if(slideDir){void pg.offsetWidth;pg.classList.add(slideDir)}slideDir='';curTab=p;
