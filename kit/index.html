@@ -476,7 +476,7 @@ const MQ=location.protocol=='https:';
 const OPS={'GET /api/status':'status','GET /api/settings':'settings','POST /api/settings':'setSettings','POST /api/cmd':'cmd',
  'POST /api/resume':'resume','GET /api/history':'history','GET /api/log':'log','GET /api/sys':'sys','GET /api/meter':'meter',
  'POST /api/meter':'setMeter','POST /api/filterreset':'filterreset','GET /api/presence':'presence','POST /api/presence':'setPresence'};
-let RC={},mqc=null,mqStat=null,mqOn=null,pend={},mqRx=0,mqRetry=0,booted=false;
+let mqErr='',RC={},mqc=null,mqStat=null,mqOn=null,pend={},mqRx=0,mqRetry=0,booted=false;
 if(MQ){const m=location.hash.match(/^#r=([A-Za-z0-9_-]+)/);
  if(m){try{const t=atob(m[1].replace(/-/g,'+').replace(/_/g,'/'));RC=JSON.parse(decodeURIComponent(escape(t)));localStorage.setItem('smartacR',JSON.stringify(RC))}catch(e){}
   history.replaceState(null,'',location.pathname+location.search+'#ctl')}
@@ -495,7 +495,10 @@ function mqConnect(){if(!RC.kit||!RC.user||!RC.key){toast('Thiếu thông tin k�
  mqc.on('message',(t,p)=>{mqRx=Date.now();const v=p.toString();
   if(t==TB()+'esp/status'){mqStat=v;st()}else if(t==TB()+'esp/online'){mqOn=v=='1';st()}
   else if(t.startsWith(TB()+'esp/resp/')){const q=t.split('/'),r=pend[q[4]];if(r){delete pend[q[4]];r(new Res(+q[5],v))}}});
- mqc.on('error',e=>{if(/auth|authori[sz]ed|bad user|password/i.test(e.message)){mqc.end(true);toast('Máy chủ từ chối tài khoản app: mở app ở nhà một lần để nhận lại',0)}});
+ mqc.on('error',e=>{mqErr=e&&e.message||'lỗi không rõ';
+  if(/auth|authori[sz]ed|bad user|password/i.test(mqErr)){mqc.end(true);mqErr='máy chủ từ chối tài khoản app ('+RC.user+'): sai mật khẩu của app trong kit'}
+  toast('Không vào được máy chủ: '+mqErr,0);st()});
+ mqc.on('close',()=>{if(!mqErr)mqErr='mất kết nối tới máy chủ (Internet của điện thoại?)'});
  mqc.on('offline',()=>st())}
 // Điện thoại khóa màn hình / chuyển app có thể cắt kết nối mà thư viện không biết ngay: quá 40 giây không nhận gì thì kết nối lại
 async function mqReady(){if(mqc&&mqc.connected&&Date.now()-mqRx<40000)return true;
@@ -651,7 +654,8 @@ const SAVE={
  sSens:s=>save({tOff:+$('sT').dataset.v,rhOff:+$('sH').dataset.v},s)};
 // ---- Trạng thái (mỗi 5 giây) ----
 function rhTag(h){return h==null||isNaN(h)?['--','']:h<40?['Khô','blue']:h<=60?['Dễ chịu','']:h<=70?['Hơi ẩm','org']:['Rất ẩm','org']}
-async function st(){let s;try{s=S=await j('/api/status')}catch(e){$('dot').className='dot off';$('connTx').textContent='Mất kết nối kit';return}
+async function st(){let s;try{s=S=await j('/api/status')}catch(e){$('dot').className='dot off';
+ $('connTx').textContent=!MQ?'Mất kết nối kit':(mqc&&mqc.connected?(mqOn===false?'Kit mất kết nối Internet':'Kit không trả lời'):'Chưa vào được máy chủ');return}
  $('dot').className='dot'+(MQ&&mqOn===false?' off':'');const where=MQ?(mqOn===false?'Kit mất kết nối':'Qua Internet'):'Trong mạng nhà';$('connTx').textContent=s.time&&s.time!='--:--'?where+' · '+s.time:where;
  if(s.room){$('roomName').textContent=s.room;document.title=s.room+' · SmartAC'}
  $('bSafe').hidden=!s.safeMode;$('bIr').hidden=!!s.irLearned;
