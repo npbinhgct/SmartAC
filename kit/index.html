@@ -506,7 +506,9 @@ async function mqReq(op,body){if(!await mqReady())return new Res(503,'Chưa kế
  const id=hex(crypto.getRandomValues(new Uint8Array(8))),ts=Math.floor(Date.now()/1000),sig=await sign(RC.key,id+'\n'+ts+'\n'+op+'\n'+body);
  return new Promise(res=>{pend[id]=res;mqc.publish(TB()+'phone/req',JSON.stringify({id,ts,op,body,sig}));
   setTimeout(()=>{if(pend[id]){delete pend[id];res(new Res(504,mqOn===false?'Kit đang mất kết nối Internet':'Kit không trả lời'))}},10000)})}
-async function api(method,url,body){if(!MQ)return fetch(url,method=='GET'?undefined:{method,body});
+// Trong nhà: chờ tối đa 6 giây (mất WiFi nhà giữa chừng thì báo lỗi ngay, không treo "Đang gửi lệnh…")
+function lanFetch(url,o){const c=new AbortController(),t=setTimeout(()=>c.abort(),6000);return fetch(url,Object.assign({signal:c.signal},o||{})).finally(()=>clearTimeout(t))}
+async function api(method,url,body){if(!MQ)return lanFetch(url,method=='GET'?undefined:{method,body});
  if(url=='/api/status'&&mqStat)return new Res(200,mqStat);    // trạng thái kit tự gửi, không tốn lượt hỏi
  const op=OPS[method+' '+url];if(!op)return new Res(400,'Việc này chỉ làm được khi ở nhà');
  return mqReq(op,body||'')}
