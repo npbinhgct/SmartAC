@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0B7F68">
+<title>SmartAC</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="application-name" content="SmartAC">
+<meta name="apple-mobile-web-app-title" content="SmartAC">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>
+/* Giao diện bán hàng kit C3 (15/11/2026): 5 tab + pop-up. Chạy hoàn toàn trong WiFi nhà, không tải gì từ Internet. */
+:root{--bg:#F3F5F7;--card:#fff;--line:#E4E8EC;--tx:#14213D;--mut:#556070;--acc:#0B7F68;--accBg:#E3F4EF;--onAcc:#fff;--org:#B4520C;--orgBg:#FDEEE2;--red:#B42318;--redBg:#FDECEA;--blue:#1D5FA8;--seg:#F3F5F7;--sh:0 1px 2px rgba(20,33,61,.04)}
+@media(prefers-color-scheme:dark){:root{--bg:#14181C;--card:#1E2328;--line:#2E353C;--tx:#E8EDF2;--mut:#A0ABB6;--acc:#2EC4A0;--accBg:#173A32;--onAcc:#06231C;--org:#F2A060;--orgBg:#3A2618;--red:#F48A80;--redBg:#3A1E1C;--blue:#7DB5F0;--seg:#252B31;--sh:none}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--tx);-webkit-tap-highlight-color:transparent;font-size:15px}
+button,input,select{font-family:inherit;font-size:inherit;color:inherit}
+svg.i{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.wrap{max-width:560px;margin:auto;padding:0 16px calc(96px + env(safe-area-inset-bottom))}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:20px 0 8px}
+.roomBtn{display:flex;align-items:center;gap:4px;border:0;background:transparent;padding:6px 0;font-size:22px;font-weight:700;cursor:pointer;min-height:44px}
+.roomBtn svg.i{width:20px;height:20px}
+.conn{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mut);white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:4px;background:var(--acc)}.dot.off{background:var(--red)}
+h1.pt{margin:0;font-size:22px;font-weight:700}
+.sub{margin:4px 0 0;font-size:13px;color:var(--mut)}
+.pg{display:none;flex-direction:column;gap:14px}.pg.on{display:flex}
+.pg>header{padding:20px 0 2px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--sh)}
+.card.list{padding:4px 16px;gap:0}
+.card h2{margin:0;font-size:15px;font-weight:700}
+.sep{height:1px;background:var(--line)}
+.row{display:flex;align-items:center;gap:12px;min-height:56px;width:100%;border:0;background:transparent;text-align:left;padding:6px 0;cursor:pointer;text-decoration:none;color:var(--tx)}
+.row.static{cursor:default}
+.row+.row{border-top:1px solid var(--line)}
+.row .ic{width:40px;height:40px;border-radius:12px;background:var(--accBg);color:var(--acc);display:flex;align-items:center;justify-content:center;flex:none}
+.row .ic svg.i{width:20px;height:20px}
+.row .ic.off{background:var(--seg);color:var(--mut)}
+.row .tx{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.row .t{font-weight:600}
+.row .d{font-size:13px;color:var(--mut);line-height:1.35}
+.row .v{display:flex;align-items:center;gap:2px;font-size:14px;font-weight:600;color:var(--acc);flex:none}
+.row .v.mut{color:var(--mut)}.row .v.org{color:var(--org)}
+.row .v svg.i{width:18px;height:18px;color:var(--mut)}
+.note{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.45;color:var(--mut);border-radius:14px;padding:12px 14px;background:var(--card);margin:0}
+.note svg.i{width:18px;height:18px}
+.note.acc{background:var(--accBg);color:var(--acc)}.note.org{background:var(--orgBg);color:var(--org)}.note.red{background:var(--redBg);color:var(--red)}
+.note.plain{background:var(--seg)}
+.note button{margin-left:auto;flex:none}
+a.note{text-decoration:none;cursor:pointer;align-items:center}
+/* Điều khiển */
+.cl{display:flex;align-items:flex-end;justify-content:space-between}
+.cl small{font-size:13px;color:var(--mut);font-weight:500}
+.cl .big{font-size:52px;font-weight:700;line-height:1;letter-spacing:-1.5px;font-variant-numeric:tabular-nums}
+.cl .rh{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.cl .rh b{display:flex;align-items:center;gap:6px;font-size:16px}
+.cl .rh b svg.i{width:18px;height:18px;color:var(--blue)}
+.tag{font-size:13px;font-weight:600;padding:4px 10px;border-radius:10px;background:var(--accBg);color:var(--acc)}
+.tag.org{background:var(--orgBg);color:var(--org)}.tag.blue{background:var(--seg);color:var(--blue)}
+.acH{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.acH small{font-size:13px;color:var(--mut);font-weight:500}
+.acH .st{font-size:18px;font-weight:700;display:flex;align-items:center;gap:6px;margin-top:4px}
+.acH .st svg.i{color:var(--acc)}
+.pwr{width:64px;height:64px;border-radius:32px;border:0;background:var(--seg);color:var(--mut);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+.pwr svg.i{width:28px;height:28px;stroke-width:2.2}
+.pwr.on{background:var(--acc);color:var(--onAcc);box-shadow:0 6px 16px rgba(11,127,104,.28)}
+.tset{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tset .n{display:flex;flex-direction:column;align-items:center}
+.tset .n b{font-size:48px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.tset .n span{font-size:13px;color:var(--mut);margin-top:4px}
+.sq{width:56px;height:56px;border-radius:18px;border:1px solid var(--line);background:var(--card);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+.sq.sm{width:44px;height:44px;border-radius:14px}
+.sq:disabled{opacity:.35;cursor:default}
+.lab{font-size:13px;color:var(--mut);font-weight:600}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:6px;background:var(--seg);border-radius:14px;padding:4px}
+.seg button{min-height:44px;border:0;border-radius:11px;background:transparent;color:var(--mut);font-weight:600;font-size:14px;cursor:pointer}
+.seg button.on{background:var(--card);color:var(--acc);font-weight:700;box-shadow:0 1px 3px rgba(20,33,61,.12)}
+.seg button:disabled{opacity:.4}
+#modes button{min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+#modes b{font-size:16px}#modes small{font-size:12px;font-weight:400;color:var(--mut)}
+/* Công tắc */
+.sw{position:relative;width:50px;height:30px;flex:none}
+.sw input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;z-index:1}
+.sw span{position:absolute;inset:0;border-radius:15px;background:#C9D0D7;transition:.2s}
+.sw span:after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:12px;background:#fff;box-shadow:0 1px 3px rgba(20,33,61,.25);transition:.2s}
+.sw input:checked+span{background:var(--acc)}.sw input:checked+span:after{left:23px}
+.sw input:focus-visible+span{outline:2px solid var(--acc);outline-offset:2px}
+.master{display:flex;align-items:center;gap:12px}
+.master .bi{width:44px;height:44px;border-radius:14px;background:var(--acc);color:var(--onAcc);display:flex;align-items:center;justify-content:center;flex:none}
+.master .bi.nt{background:#2B3A67;color:#fff}
+.master .tx{flex:1;display:flex;flex-direction:column;gap:2px}
+.master .tx b{font-size:17px}
+.master .tx span{font-size:13px;color:var(--mut)}
+/* Hẹn giờ / Ngủ */
+.mark{display:flex;align-items:center;gap:12px;min-height:72px;width:100%;border:0;background:transparent;text-align:left;cursor:pointer;padding:6px 0}
+.mark+.mark{border-top:1px solid var(--line)}
+.mark .tg{font-size:12px;font-weight:700;padding:3px 9px;border-radius:9px;background:var(--accBg);color:var(--acc)}
+.mark .tg.off{background:var(--orgBg);color:var(--org)}
+.mark .tm{display:flex;flex-direction:column;flex:1}
+.mark .tm b{font-size:28px;line-height:1.1;font-variant-numeric:tabular-nums}
+.mark .tm span{font-size:13px;color:var(--mut)}
+.mark svg.i{width:18px;height:18px;color:var(--mut)}
+.tbox{display:flex;gap:10px}
+.tbox button{flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:14px;border-radius:16px;background:var(--seg);border:0;cursor:pointer;text-align:left}
+.tbox span{font-size:13px;color:var(--mut)}
+.tbox b{font-size:26px;font-variant-numeric:tabular-nums}
+.tbox i{font-style:normal;font-size:12px;color:var(--mut)}
+.tbox .on{color:var(--acc);font-weight:700}.tbox .off{color:var(--org);font-weight:700}
+.info{display:flex;flex-direction:column;gap:10px}
+.info div{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.4}
+.info svg.i{width:20px;height:20px;color:var(--acc);margin-top:1px}
+/* Thanh tab dưới */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:5}
+nav.tabs .in{max-width:560px;margin:auto;display:flex}
+nav.tabs a{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0 12px;text-decoration:none;color:var(--mut);font-size:12px;font-weight:500}
+nav.tabs a.on{color:var(--acc);font-weight:700}
+/* Pop-up */
+.ov{position:fixed;inset:0;background:rgba(20,33,61,.45);z-index:10;display:none;align-items:flex-end;justify-content:center}
+.ov.on{display:flex}
+.sheet{background:var(--card);width:100%;max-width:560px;max-height:88vh;overflow-y:auto;border-radius:24px 24px 0 0;padding:10px 18px calc(20px + env(safe-area-inset-bottom));display:none;flex-direction:column;gap:16px;animation:up .2s ease-out}
+.sheet.on{display:flex}
+@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+.sheet .grip{width:40px;height:5px;border-radius:3px;background:var(--line);align-self:center}
+.sheet .sh{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sheet h2{margin:0;font-size:19px}
+.x{width:44px;height:44px;border-radius:22px;background:var(--seg);border:0;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+.x svg.i{width:20px;height:20px}
+.sheet p.d{margin:0;font-size:13px;color:var(--mut);line-height:1.45}
+.ft{display:flex;gap:10px}
+.btn{flex:1;min-height:48px;border-radius:14px;border:1px solid var(--line);background:var(--card);font-weight:700;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;color:var(--tx);padding:0 14px}
+.btn.pri{background:var(--acc);color:var(--onAcc);border:0}
+.btn.ghost{color:var(--acc)}
+.btn.sm{flex:none;min-height:40px;font-size:14px;font-weight:600}
+.btn:disabled{opacity:.5}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;align-items:center;gap:12px;text-align:left;min-height:52px;padding:10px 14px;border-radius:14px;border:1px solid var(--line);background:var(--card);cursor:pointer}
+.opt .rd{width:20px;height:20px;border-radius:10px;border:2px solid #AEB6BF;display:flex;align-items:center;justify-content:center;flex:none}
+.opt.on{border-color:var(--acc);background:var(--accBg)}
+.opt.on .rd{border-color:var(--acc)}.opt.on .rd:after{content:"";width:10px;height:10px;border-radius:5px;background:var(--acc)}
+.opt .tx{display:flex;flex-direction:column;gap:2px}
+.opt .tx b{font-weight:600}.opt .tx span{font-size:13px;color:var(--mut)}
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.pills button{min-height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-weight:600;font-size:14px;cursor:pointer}
+.pills button.on{border-color:var(--acc);background:var(--accBg);color:var(--acc)}
+.fld{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px}
+.fld label{font-weight:600}
+.fld .d{display:block;font-size:13px;color:var(--mut);font-weight:400}
+.stp{display:flex;align-items:center;gap:10px}
+.stp b{font-size:20px;min-width:70px;text-align:center;font-variant-numeric:tabular-nums}
+input[type=text]{min-height:48px;border-radius:12px;border:1px solid var(--line);background:var(--seg);padding:0 12px;font-size:17px;font-weight:600}
+/* Chọn giờ ngay trong pop-up: 2 bánh xe cuộn (giờ, phút) thay cho hộp chọn giờ của điện thoại */
+.tps{display:flex;gap:12px;justify-content:center}
+.tpw{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;max-width:220px}
+.tpw .lab{align-self:center}
+.tp{position:relative;display:flex;align-items:center;justify-content:center;gap:2px;height:156px;width:100%}
+.tp:before{content:"";position:absolute;left:0;right:0;top:50%;height:52px;margin-top:-26px;border-radius:14px;background:var(--seg);z-index:0}
+.tp b{position:relative;z-index:1;font-size:28px;font-weight:700}
+.wh{position:relative;z-index:1;height:156px;width:72px;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none;padding:52px 0;box-sizing:border-box;
+ -webkit-mask-image:linear-gradient(transparent,#000 30%,#000 70%,transparent);mask-image:linear-gradient(transparent,#000 30%,#000 70%,transparent)}
+.wh::-webkit-scrollbar{display:none}
+.wh div{height:52px;line-height:52px;text-align:center;font-size:28px;font-weight:600;color:var(--mut);scroll-snap-align:center;cursor:pointer;font-variant-numeric:tabular-nums}
+.wh div.on{color:var(--tx);font-weight:700}
+input[type=text]{width:100%}
+.days{display:flex;justify-content:space-between;gap:4px}
+.days button{width:42px;height:42px;border-radius:21px;border:0;background:var(--seg);color:var(--mut);font-weight:600;font-size:13px;cursor:pointer}
+.days button.on{background:var(--acc);color:var(--onAcc)}
+.kv{display:flex;justify-content:space-between;gap:12px;font-size:14px;padding:8px 0;border-top:1px solid var(--line)}
+.kv span:first-child{color:var(--mut)}.kv span:last-child{text-align:right;font-weight:600}
+.msg{font-size:13px;color:var(--red);min-height:1em;margin:0}
+.toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#14213D;color:#fff;padding:12px 18px;border-radius:14px;font-size:14px;opacity:0;pointer-events:none;transition:.2s;z-index:20;max-width:90vw;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%)}
+/* Theo dõi: tiền điện + vệ sinh */
+.money{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.money div{background:var(--seg);border-radius:14px;padding:12px 10px;display:flex;flex-direction:column;gap:2px}
+.money span{font-size:12px;color:var(--mut)}
+.money b{font-size:16px;white-space:nowrap;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.money i{font-style:normal;font-size:12px;color:var(--mut)}
+.chd{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.chd b{font-size:22px;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.chd span{font-size:13px;color:var(--mut)}
+.chart{display:flex;align-items:flex-end;gap:3px;height:140px;padding-top:6px;border-bottom:1px solid var(--line)}
+.chart button{flex:1;min-width:0;height:100%;display:flex;align-items:flex-end;border:0;padding:0;background:none;cursor:pointer}
+.chart button i{display:block;width:100%;border-radius:4px 4px 0 0;background:var(--accBg);min-height:3px}
+.chart button.on i{background:var(--acc)}
+.chart.m{gap:6px}
+.chx{display:flex;gap:3px;font-size:11px;color:var(--mut);margin-top:-6px}
+.chart.m+.chx{gap:6px}
+.chx span{flex:1;min-width:0;text-align:center;white-space:nowrap;overflow:visible}
+.bar{height:10px;border-radius:5px;background:var(--seg);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--acc);border-radius:5px}
+.bar.due i{background:var(--org)}
+.num{display:flex;align-items:center;gap:8px}
+.num input{width:110px;text-align:right;min-height:48px;border-radius:12px;border:1px solid var(--line);background:var(--seg);padding:0 12px;font-size:18px;font-weight:700}
+.num span{color:var(--mut);font-size:14px;min-width:46px}
+.inp{width:100%;min-height:48px;border-radius:12px;border:1px solid var(--line);background:var(--seg);padding:0 12px;font-size:16px;color:inherit}
+.fcol{display:flex;flex-direction:column;gap:6px}
+.pw{display:flex;gap:8px}.pw .inp{flex:1}.pw button{min-width:64px;border-radius:12px;border:1px solid var(--line);background:var(--seg);color:var(--acc);font-weight:700;font-size:15px}.fcol label{font-size:14px;color:var(--mut)}
+[hidden]{display:none!important}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-power" viewBox="0 0 24 24"><path d="M12 3v8"/><path d="M6.3 7.5a8 8 0 1 0 11.4 0"/></symbol>
+<symbol id="i-auto" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M21 3v6h-6"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+<symbol id="i-set" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z"/></symbol>
+<symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+<symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+<symbol id="i-back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+<symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></symbol>
+<symbol id="i-filter" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M11 5v14M15 5v14M19 5v14"/></symbol>
+<symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></symbol>
+<symbol id="i-snow" viewBox="0 0 24 24"><path d="M12 3v18 M4.2 7.5l15.6 9 M4.2 16.5l15.6-9 M14.5 4.5L12.0 6.5L9.5 4.5 M19.7 10.4L16.8 9.2L17.2 6.1 M17.2 17.9L16.8 14.8L19.7 13.6 M9.5 19.5L12.0 17.5L14.5 19.5 M4.3 13.6L7.2 14.8L6.8 17.9 M6.8 6.1L7.2 9.2L4.3 10.4"/></symbol>
+<symbol id="i-fan" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M12 10c0-4 1-6 3-6s3 2 1 4l-2 2M14 12c4 0 6 1 6 3s-2 3-4 1l-2-2M12 14c0 4-1 6-3 6s-3-2-1-4l2-2M10 12c-4 0-6-1-6-3s2-3 4-1l2 2"/></symbol>
+<symbol id="i-swing" viewBox="0 0 24 24"><path d="M4 7c4-3 12-3 16 0"/><path d="M4 12h16"/><path d="M4 17c4 3 12 3 16 0"/></symbol>
+<symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></symbol>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/></symbol>
+<symbol id="i-remote" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="3"/><circle cx="12" cy="7.5" r="1.5"/><path d="M10 12h4M10 15h4"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+<symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></symbol>
+<symbol id="i-wifi" viewBox="0 0 24 24"><path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1"/></symbol>
+<symbol id="i-therm" viewBox="0 0 24 24"><path d="M14 14.8V5a2 2 0 0 0-4 0v9.8a4 4 0 1 0 4 0z"/></symbol>
+<symbol id="i-tag" viewBox="0 0 24 24"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.2"/></symbol>
+<symbol id="i-chip" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></symbol>
+<symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.5"/></symbol>
+</defs></svg>
+
+<div class="wrap">
+<header class="top">
+ <button class="roomBtn" id="roomBtn" type="button"><svg class="i" id="appBack" hidden><use href="#i-back"/></svg><span id="roomName">SmartAC</span><svg class="i" id="roomChev" hidden><use href="#i-down"/></svg></button>
+ <span class="conn"><span class="dot" id="dot"></span><span id="connTx">Đang kết nối…</span></span>
+</header>
+
+<p class="note red" id="bSafe" hidden><svg class="i"><use href="#i-warn"/></svg><span>Kit đã tự khởi động lại nhiều lần nên đang ở chế độ an toàn, tạm chưa điều khiển máy lạnh.</span><button class="btn sm" id="bNormal" type="button">Chạy lại</button></p>
+<a class="note org" id="bIr" href="#set" hidden><svg class="i"><use href="#i-remote"/></svg><span style="flex:1">Kit chưa biết máy lạnh của bạn: chĩa remote về phía kit bấm 1 nút, hoặc vào Cài đặt → Remote máy lạnh để chọn hãng.</span><svg class="i"><use href="#i-chev"/></svg></a>
+
+<!-- ===== 1. Điều khiển ===== -->
+<section class="pg" id="p-ctl">
+ <div class="card">
+  <div class="cl">
+   <div><small id="vSrc">Trong phòng</small><div class="big" id="vT">--°</div></div>
+   <div class="rh"><b><svg class="i"><use href="#i-drop"/></svg><span id="vH">--%</span></b><span class="tag" id="vHtag">--</span></div>
+  </div>
+ </div>
+ <div class="card">
+  <div class="acH">
+   <div><small>Máy lạnh</small><div class="st" id="acSt"><svg class="i"><use href="#i-snow"/></svg><span>--</span></div></div>
+   <button class="pwr" id="pwr" type="button" aria-label="Bật / tắt máy lạnh"><svg class="i"><use href="#i-power"/></svg></button>
+  </div>
+  <div class="tset">
+   <button class="sq" id="tm" type="button" aria-label="Giảm nhiệt độ"><svg class="i"><use href="#i-minus"/></svg></button>
+   <div class="n"><b id="tset">--</b><span id="tlab">Nhiệt độ đặt</span></div>
+   <button class="sq" id="tp" type="button" aria-label="Tăng nhiệt độ"><svg class="i"><use href="#i-plus"/></svg></button>
+  </div>
+  <div class="lab">Chế độ</div>
+  <div class="seg" role="radiogroup" aria-label="Chế độ" id="modes"></div>
+ </div>
+ <div class="card list">
+  <button class="row" id="rFan" type="button"><span class="ic"><svg class="i"><use href="#i-fan"/></svg></span><span class="tx"><span class="t">Tốc độ quạt</span></span><span class="v"><span id="fanNow">--</span><svg class="i"><use href="#i-chev"/></svg></span></button>
+  <button class="row" id="rSwing" type="button"><span class="ic"><svg class="i"><use href="#i-swing"/></svg></span><span class="tx"><span class="t">Đảo gió</span></span><span class="v"><span id="swNow">--</span><svg class="i"><use href="#i-chev"/></svg></span></button>
+ </div>
+
+ <div class="card">
+  <div class="master"><span class="bi"><svg class="i"><use href="#i-clock"/></svg></span><span class="tx"><b>Hẹn giờ bật / tắt</b><span id="todayTx">--</span></span></div>
+  <div class="tbox"><button type="button" data-sheet="sOn"><span class="on">Bật máy</span><b id="vOn">--:--</b><i id="dOn">--</i></button><button type="button" data-sheet="sOff"><span class="off">Tắt máy</span><b id="vOff">--:--</b><i id="dOff">--</i></button></div>
+  <p class="note org" id="tmrOff" hidden style="margin:0"><svg class="i"><use href="#i-info"/></svg><span>Hẹn giờ chỉ chạy khi Chế độ thông minh đang bật (tab Tự động).</span></p>
+ </div>
+ <p class="note org" id="bPause" hidden><svg class="i"><use href="#i-clock"/></svg><span id="pauseTx">Tự động đang tạm dừng vì bạn vừa chỉnh tay.</span><button class="btn sm" id="resume" type="button">Chạy tự động</button></p>
+ <a class="note org" id="bFilter" href="#use" hidden><svg class="i"><use href="#i-filter"/></svg><span style="flex:1">Đến hạn vệ sinh lưới lọc máy lạnh. Bấm để xem.</span><svg class="i"><use href="#i-chev"/></svg></a>
+</section>
+
+<!-- ===== 2. Tự động ===== -->
+<section class="pg" id="p-auto">
+ <header><h1 class="pt">Tự động</h1><p class="sub">Các chế độ máy tự chạy, không cần bấm</p></header>
+ <div class="card">
+  <div class="master"><span class="bi"><svg class="i"><use href="#i-spark"/></svg></span><span class="tx"><b>Chế độ thông minh</b><span>Máy tự bật, tắt, chỉnh theo phòng và lịch</span></span><label class="sw"><input type="checkbox" id="qAuto" aria-label="Chế độ thông minh"><span></span></label></div>
+  <p class="note plain" style="margin:0"><svg class="i"><use href="#i-info"/></svg><span id="reason">--</span></p>
+ </div>
+ <div class="card list">
+  <button class="row" type="button" data-sheet="sCool"><span class="ic"><svg class="i"><use href="#i-snow"/></svg></span><span class="tx"><span class="t">Làm mát</span><span class="d" id="dCool">--</span></span><span class="v"><span id="vCool">--</span><svg class="i"><use href="#i-chev"/></svg></span></button>
+  <button class="row" type="button" data-sheet="sDry"><span class="ic"><svg class="i"><use href="#i-drop"/></svg></span><span class="tx"><span class="t">Hút ẩm thông minh</span><span class="d">Phòng ẩm thì tự hút ẩm, đủ khô thì về làm lạnh</span></span><span class="v"><span id="vDry">--</span><svg class="i"><use href="#i-chev"/></svg></span></button>
+  <button class="row" type="button" data-sheet="sAway"><span class="ic" id="icAway"><svg class="i"><use href="#i-home"/></svg></span><span class="tx"><span class="t">Tự nhận biết khi ra khỏi nhà</span><span class="d" id="dAway">--</span></span><span class="v"><span id="vAway">--</span><svg class="i"><use href="#i-chev"/></svg></span></button>
+  <button class="row" type="button" data-sheet="sMold"><span class="ic" id="icMold"><svg class="i"><use href="#i-fan"/></svg></span><span class="tx"><span class="t">Chống nấm mốc</span><span class="d">Chạy quạt cho khô dàn lạnh trước khi tắt</span></span><span class="v"><span id="vMold">--</span><svg class="i"><use href="#i-chev"/></svg></span></button>
+ </div>
+
+ <div class="card">
+  <div class="master"><span class="bi nt"><svg class="i"><use href="#i-moon"/></svg></span><span class="tx"><b>Chế độ ngủ</b><span id="slpNow">--</span></span><label class="sw"><input type="checkbox" id="qSleep" aria-label="Chế độ ngủ"><span></span></label></div>
+  <div class="tbox"><button type="button" data-sheet="sSleep"><span>Đi ngủ</span><b id="vSs">--:--</b></button><button type="button" data-sheet="sSleep"><span>Thức dậy</span><b id="vSe">--:--</b></button></div>
+  <div class="info">
+   <div><svg class="i"><use href="#i-fan"/></svg><span>Trong giờ ngủ máy chạy quạt êm cho đỡ ồn.</span></div>
+   <div><svg class="i"><use href="#i-therm"/></svg><span>Ngủ được 2 giờ thì tăng 1°C; 1 giờ 30 phút trước giờ dậy tăng thêm 1°C, đỡ lạnh và đỡ tốn điện.</span></div>
+  </div>
+ </div>
+</section>
+
+<!-- ===== Theo dõi: tiền điện + vệ sinh máy lạnh ===== -->
+<section class="pg" id="p-use">
+ <header><h1 class="pt">Theo dõi</h1><p class="sub">Tiền điện máy lạnh và lịch vệ sinh</p></header>
+ <div class="card">
+  <h2>Tiền điện (ước tính)</h2>
+  <div class="money">
+   <div><span>Hôm nay</span><b id="mDay">--</b><i id="kDay">-- kWh</i></div>
+   <div><span>Tháng này</span><b id="mMon">--</b><i id="kMon">-- kWh</i></div>
+   <div><span>Tháng trước</span><b id="mPrev">--</b><i id="kPrev">-- kWh</i></div>
+  </div>
+  <button class="row" type="button" data-sheet="sPower" style="border-top:1px solid var(--line)"><span class="ic"><svg class="i"><use href="#i-bolt"/></svg></span><span class="tx"><span class="t">Công suất và giá điện</span><span class="d" id="dPower">--</span></span><span class="v"><svg class="i"><use href="#i-chev"/></svg></span></button>
+  <p class="note org" id="mNoTime" hidden style="margin:0"><svg class="i"><use href="#i-clock"/></svg><span>Kit chưa có giờ nên chưa chia được theo ngày / tháng.</span></p>
+ </div>
+ <div class="card" id="cCard" hidden>
+  <h2>Thống kê tiền điện</h2>
+  <div class="seg" role="radiogroup" aria-label="Xem theo" id="cSeg"><button type="button" data-v="d" class="on" aria-checked="true" role="radio">30 ngày qua</button><button type="button" data-v="m" role="radio" aria-checked="false">12 tháng qua</button></div>
+  <div class="chd"><span id="cLab">--</span><span id="cKwh">--</span></div>
+  <div class="chd" style="margin-top:-10px"><b id="cVal">--</b></div>
+  <div class="chart" id="cBars"></div>
+  <div class="chx" id="cAx"></div>
+  <p class="d" id="cSum" style="margin:0;font-size:13px;color:var(--mut)">--</p>
+ </div>
+ <div class="card">
+  <h2>Vệ sinh máy lạnh</h2>
+  <div class="bar" id="fBar"><i id="fFill" style="width:0"></i></div>
+  <div class="row static" style="min-height:0;padding:0"><span class="tx"><span class="t" id="fTx">--</span><span class="d" id="fSub">--</span></span></div>
+  <button class="btn" type="button" id="fReset">Tôi vừa vệ sinh xong</button>
+  <button class="row" type="button" data-sheet="sFilter" style="border-top:1px solid var(--line)"><span class="ic"><svg class="i"><use href="#i-filter"/></svg></span><span class="tx"><span class="t">Nhắc sau mỗi</span><span class="d">Tính theo số giờ máy lạnh chạy</span></span><span class="v"><span id="vFilter">--</span><svg class="i"><use href="#i-chev"/></svg></span></button>
+ </div>
+</section>
+
+<!-- ===== 5. Cài đặt ===== -->
+<section class="pg" id="p-set">
+ <header><h1 class="pt">Cài đặt</h1></header>
+ <div class="card list">
+  <button class="row" type="button" data-sheet="sRoom"><span class="ic"><svg class="i"><use href="#i-tag"/></svg></span><span class="tx"><span class="t">Tên phòng</span><span class="d">Hiện trên điện thoại và khi chuyển phòng</span></span><span class="v"><span id="vRoom">--</span><svg class="i"><use href="#i-chev"/></svg></span></button>
+  <button class="row" type="button" data-sheet="sIr"><span class="ic"><svg class="i"><use href="#i-remote"/></svg></span><span class="tx"><span class="t">Remote máy lạnh</span><span class="d" id="dIr">--</span></span><span class="v"><svg class="i"><use href="#i-chev"/></svg></span></button>
+  <button class="row" type="button" data-sheet="sPause"><span class="ic"><svg class="i"><use href="#i-remote"/></svg></span><span class="tx"><span class="t">Tạm dừng khi chỉnh tay</span><span class="d">Bấm remote hay chỉnh trên điện thoại thì máy theo ý bạn</span></span><span class="v"><span id="vPause">--</span><svg class="i"><use href="#i-chev"/></svg></span></button>
+  <button class="row" type="button" data-sheet="sSens"><span class="ic"><svg class="i"><use href="#i-therm"/></svg></span><span class="tx"><span class="t">Chỉnh số đo cảm biến</span><span class="d" id="dSens">--</span></span><span class="v"><svg class="i"><use href="#i-chev"/></svg></span></button>
+ </div>
+ <div class="card list">
+  <a class="row" href="/wifi"><span class="ic"><svg class="i"><use href="#i-wifi"/></svg></span><span class="tx"><span class="t">WiFi</span><span class="d" id="dWifi">--</span></span><span class="v">Đổi<svg class="i"><use href="#i-chev"/></svg></span></a>
+  <div class="row static"><span class="tx"><span class="t">Địa chỉ trong nhà</span><span class="d" id="dAddr">--</span></span></div>
+  <button class="row" type="button" data-sheet="sCloud"><span class="ic off" id="icCloud"><svg class="i"><use href="#i-wifi"/></svg></span><span class="tx"><span class="t">Điều khiển ngoài nhà</span><span class="d" id="dCloud">--</span></span><span class="v"><svg class="i"><use href="#i-chev"/></svg></span></button>
+  <button class="row" type="button" data-sheet="sTech"><span class="ic off"><svg class="i"><use href="#i-chip"/></svg></span><span class="tx"><span class="t">Thông tin kỹ thuật</span><span class="d">Dành cho thợ lắp đặt</span></span><span class="v"><svg class="i"><use href="#i-chev"/></svg></span></button>
+ </div>
+</section>
+</div>
+
+<nav class="tabs" aria-label="Các mục chính"><div class="in">
+ <a href="#ctl" data-p="ctl"><svg class="i"><use href="#i-power"/></svg><span>Điều khiển</span></a>
+ <a href="#auto" data-p="auto"><svg class="i"><use href="#i-auto"/></svg><span>Tự động</span></a>
+ <a href="#use" data-p="use"><svg class="i"><use href="#i-bolt"/></svg><span>Theo dõi</span></a>
+ <a href="#set" data-p="set"><svg class="i"><use href="#i-set"/></svg><span>Cài đặt</span></a>
+</div></nav>
+
+<!-- ===== Pop-up ===== -->
+<div class="ov" id="ov">
+ <div class="sheet" id="sFan" role="dialog" aria-modal="true" aria-labelledby="hFan"><div class="grip"></div><div class="sh"><h2 id="hFan">Tốc độ quạt</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="i"><use href="#i-close"/></svg></button></div><div class="opts" id="fanOpts"></div></div>
+ <div class="sheet" id="sSwing" role="dialog" aria-modal="true" aria-labelledby="hSw"><div class="grip"></div><div class="sh"><h2 id="hSw">Đảo gió</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="i"><use href="#i-close"/></svg></button></div><div class="opts" id="swOpts"></div></div>
+ <div class="sheet" id="sRooms" role="dialog" aria-modal="true" aria-labelledby="hRooms"><div class="grip"></div><div class="sh"><h2 id="hRooms">Chọn phòng</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="i"><use href="#i-close"/></svg></button></div><div class="opts" id="roomOpts"></div></div>
+
+ <div class="sheet" id="sCool" role="dialog" aria-modal="true" aria-labelledby="hCool"><div class="grip"></div><div class="sh"><h2 id="hCool">Làm mát</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="i"><use href="#i-close"/></svg></button></div>
+  <div class="fld"><label>Nhiệt độ mong muốn</label><div class="stp"><button class="sq sm" type="button" id="cT-" aria-label="Giảm"><svg class="i"><use href="#i-minus"/></svg></button><b id="cT">--</b><button class="sq sm" type="button" id="cT+" aria-label="Tăng"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
+  <div class="sep"></div>
+  <div class="lab">Quạt thường dùng</div><div class="pills" id="cFan"></div>
+  <p class="note plain" id="cBoost"><svg class="i"><use href="#i-info"/></svg><span>--</span></p>
+  <p class="msg"></p><div class="ft"><button class="btn" type="button" data-close>Hủy</button><button class="btn pri" type="button" data-save>Lưu</button></div></div>
+
+ <div class="sheet" id="sDry" role="dialog" aria-modal="true" aria-labelledby="hDry"><div class="grip"></div><div class="sh"><h2 id="hDry">Hút ẩm thông minh</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="i"><use href="#i-close"/></svg></button></div>
+  <p class="d">Chọn mức khô của phòng. Máy đo nhiệt độ và độ ẩm, tự quyết định khi nào hút ẩm.</p>
+  <div class="opts" id="dryOpts"></div>
+  <p class="note plain"><svg class="i"><use href="#i-info"/></svg><span>Đã hút ẩm thì chạy tối thiểu 30 phút rồi mới đổi chế độ, để máy kịp làm khô.</span></p>
+  <p class="msg"></p><div class="ft"><button class="btn" type="button" data-close>Hủy</button><button class="btn pri" type="button" data-save>Lưu</button></div></div>
+
+ <div class="sheet" id="sAway" role="dialog" aria-modal="true" aria-labelledby="hAway"><div class="grip"></div><div class="sh"><h2 id="hAway">Tự nhận biết khi ra khỏi nhà</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="i"><use href="#i-close"/></svg></button></div>
+  <div class="fld"><label for="aOn">Dùng tính năng này<span class="d">Kit biết cả nhà đã đi khi điện thoại rời WiFi nhà</span></label><label class="sw"><input type="checkbox" id="aOn"><span></span></label></div>
+  <p class="note" id="aState"></p>
+  <div class="lab">Điện thoại của người trong nhà (tối đa 3)</div>
+  <div id="aPh"></div>
+  <button class="btn" type="button" id="aAdd"><svg class="i"><use href="#i-plus"/></svg>Thêm điện thoại này</button>
+  <div class="lab">Tính là đã ra ngoài sau</div><div class="pills" id="aAfter"></div>
+  <div class="lab">Khi không ai ở nhà</div><div class="opts" id="awayOpts"></div>
+  <div class="fld" id="aTempF"><label>Nhiệt độ tiết kiệm</label><div class="stp"><button class="sq sm" type="button" id="aT-" aria-label="Giảm"><svg class="i"><use href="#i-minus"/></svg></button><b id="aT">--</b><button class="sq sm" type="button" id="aT+" aria-label="Tăng"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
+  <p class="note">Có người về là máy lạnh chạy bình thường lại. Trong giờ ngủ, kit không tính là ra ngoài. Điện thoại cần bật WiFi và giữ cố định địa chỉ IP trong modem (thường đã tự giữ).</p>
+  <p class="msg"></p><div class="ft"><button class="btn" type="button" data-close>Hủy</button><button class="btn pri" type="button" data-save>Lưu</button></div></div>
+
+ <div class="sheet" id="sMold" role="dialog" aria-modal="true" aria-labelledby="hMold"><div class="grip"></div><div class="sh"><h2 id="hMold">Chống nấm mốc</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="i"><use href="#i-close"/></svg></button></div>
+  <div class="fld"><label for="mOn">Bật chống nấm mốc<span class="d">Trước khi tắt, chạy quạt cho dàn lạnh khô</span></label><label class="sw"><input type="checkbox" id="mOn"><span></span></label></div>
+  <div class="lab">Thời gian chạy quạt</div><div class="pills" id="mMin"></div>
+  <p class="msg"></p><div class="ft"><button class="btn" type="button" data-close>Hủy</button><button class="btn pri" type="button" data-save>Lưu</button></div></div>
+
+ <div class="sheet" id="sPause" role="dialog" aria-modal="true" aria-labelledby="hPause"><div class="grip"></div><div class="sh"><h2 id="hPause">Tạm dừng khi chỉnh tay</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="i"><use href="#i-close"/></svg></button></div>
+  <p class="d">Khi bạn bấm remote gốc hoặc chỉnh ở tab Điều khiển, tự động nghỉ một lúc để máy theo ý bạn.</p>
+  <div class="pills" id="pMin"></div>
+  <p class="msg"></p><div class="ft"><button class="btn" type="button" data-close>Hủy</button><button class="btn pri" type="button" data-save>Lưu</button></div></div>
+
+ <div class="sheet" id="sOn" role="dialog" aria-modal="true" aria-labelledby="hOn"><div class="grip"></div><div class="sh"><h2 id="hOn">Giờ bật máy</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="i"><use href="#i-close"/></svg></button></div>
+  <div class="tp" id="onT" role="group" aria-label="Giờ bật"></div>
+  <div class="lab">Các ngày</div><div class="days" id="onDays"></div>
+  <p class="msg"></p><div class="ft"><button class="btn" type="button" data-close>Hủy</button><button class="btn pri" type="button" data-save>Lưu</button></div></div>
+
+ <div class="sheet" id="sOff" role="dialog" aria-modal="true" aria-labelledby="hOff"><div class="grip"></div><div class="sh"><h2 id="hOff">Giờ tắt máy</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="i"><use href="#i-close"/></svg></button></div>
+  <div class="tp" id="offT" role="group" aria-label="Giờ tắt"></div>
+  <div class="lab">Các ngày</div><div class="days" id="offDays"></div>
+  <p class="note plain"><svg class="i"><use href="#i-info"/></svg><span>Ngày không chọn: sáng hôm đó không tắt, máy chạy tiếp theo chế độ thông minh.</span></p>
+  <p class="msg"></p><div class="ft"><button class="btn" type="button" data-close>Hủy</button><button class="btn pri" type="button" data-save>Lưu</button></div></div>
+
+ <div class="sheet" id="sSleep" role="dialog" aria-modal="true" aria-labelledby="hSleep"><div class="grip"></div><div class="sh"><h2 id="hSleep">Giờ ngủ</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="i"><use href="#i-close"/></svg></button></div>
+  <div class="tps"><div class="tpw"><span class="lab">Đi ngủ</span><div class="tp" id="ssT" role="group" aria-label="Giờ đi ngủ"></div></div>
+   <div class="tpw"><span class="lab">Thức dậy</span><div class="tp" id="seT" role="group" aria-label="Giờ thức dậy"></div></div></div>
+  <p class="msg"></p><div class="ft"><button class="btn" type="button" data-close>Hủy</button><button class="btn pri" type="button" data-save>Lưu</button></div></div>
+
+ <div class="sheet" id="sPower" role="dialog" aria-modal="true" aria-labelledby="hPower"><div class="grip"></div><div class="sh"><h2 id="hPower">Công suất và giá điện</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="i"><use href="#i-close"/></svg></button></div>
+  <div class="fld"><label for="pAc">Công suất máy lạnh<span class="d">Xem trên tem máy (1 HP khoảng 800–1.000 W)</span></label><div class="num"><input id="pAc" inputmode="numeric" type="text"><span>W</span></div></div>
+  <div class="fld"><label for="pPrice">Giá điện<span class="d">Theo hóa đơn tiền điện</span></label><div class="num"><input id="pPrice" inputmode="numeric" type="text"><span>đ/kWh</span></div></div>
+  <div class="fld"><label for="pFan">Khi chỉ chạy quạt<span class="d">Thường khoảng 40 W</span></label><div class="num"><input id="pFan" inputmode="numeric" type="text"><span>W</span></div></div>
+  <p class="msg"></p><div class="ft"><button class="btn" type="button" data-close>Hủy</button><button class="btn pri" type="button" data-save>Lưu</button></div></div>
+
+ <div class="sheet" id="sCloud" role="dialog" aria-modal="true" aria-labelledby="hCloud"><div class="grip"></div><div class="sh"><h2 id="hCloud">Điều khiển ngoài nhà</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="i"><use href="#i-close"/></svg></button></div>
+  <p class="note" id="cSt">--</p>
+  <p class="d">Phần dưới dành cho thợ lắp đặt: tài khoản trên máy chủ điều khiển từ xa. Mật khẩu để trống = giữ mật khẩu cũ.</p>
+  <div class="fcol"><label for="cU">Tài khoản của kit</label><input class="inp" id="cU" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+  <div class="fcol"><label for="cP">Mật khẩu của kit</label><div class="pw"><input class="inp" id="cP" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false"><button type="button" data-eye="cP">Hiện</button></div></div>
+  <div class="fcol"><label for="cAU">Tài khoản của app</label><input class="inp" id="cAU" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+  <div class="fcol"><label for="cAP">Mật khẩu của app</label><div class="pw"><input class="inp" id="cAP" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false"><button type="button" data-eye="cAP">Hiện</button></div></div>
+  <button class="btn" type="button" id="cNew">Đổi khóa ghép (điện thoại cũ mất quyền điều khiển từ xa)</button>
+  <p class="msg"></p><div class="ft"><button class="btn" type="button" data-close>Hủy</button><button class="btn pri" type="button" data-save>Lưu</button></div></div>
+
+ <div class="sheet" id="sFilter" role="dialog" aria-modal="true" aria-labelledby="hFilter"><div class="grip"></div><div class="sh"><h2 id="hFilter">Nhắc vệ sinh</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="i"><use href="#i-close"/></svg></button></div>
+  <p class="d">Lưới lọc bẩn làm máy kém mát và tốn điện hơn. Nhắc sau mỗi:</p>
+  <div class="pills" id="fH"></div>
+  <p class="msg"></p><div class="ft"><button class="btn" type="button" data-close>Hủy</button><button class="btn pri" type="button" data-save>Lưu</button></div></div>
+
+ <div class="sheet" id="sRoom" role="dialog" aria-modal="true" aria-labelledby="hRoom"><div class="grip"></div><div class="sh"><h2 id="hRoom">Tên phòng</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="i"><use href="#i-close"/></svg></button></div>
+  <input type="text" id="rName" maxlength="20" aria-label="Tên phòng" placeholder="Ví dụ: Phòng ngủ">
+  <p class="msg"></p><div class="ft"><button class="btn" type="button" data-close>Hủy</button><button class="btn pri" type="button" data-save>Lưu</button></div></div>
+
+ <div class="sheet" id="sIr" role="dialog" aria-modal="true" aria-labelledby="hIr"><div class="grip"></div><div class="sh"><h2 id="hIr">Remote máy lạnh</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="i"><use href="#i-close"/></svg></button></div>
+  <div class="kv"><span>Loại máy đã học</span><span id="irP">--</span></div>
+  <div class="kv"><span>Bấm remote gốc gần nhất</span><span id="irL">--</span></div>
+  <p class="d">Kit có mắt thu: chĩa remote máy lạnh về phía kit, bấm 1 nút bất kỳ, kit tự nhận ra loại máy. Hoặc chọn hãng bên dưới rồi bấm Phát thử: máy lạnh kêu bíp là đúng.</p>
+  <div class="lab">Chọn hãng máy lạnh</div><div class="opts" id="irBrands"></div>
+  <div class="ft"><button class="btn ghost" type="button" id="irTest">Phát thử</button><button class="btn" type="button" data-close>Đóng</button></div></div>
+
+ <div class="sheet" id="sSens" role="dialog" aria-modal="true" aria-labelledby="hSens"><div class="grip"></div><div class="sh"><h2 id="hSens">Chỉnh số đo cảm biến</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="i"><use href="#i-close"/></svg></button></div>
+  <p class="d">Chỉ chỉnh khi số đo lệch so với nhiệt kế chuẩn đặt cạnh kit.</p>
+  <div class="fld"><label>Bù nhiệt độ</label><div class="stp"><button class="sq sm" type="button" id="sT-" aria-label="Giảm"><svg class="i"><use href="#i-minus"/></svg></button><b id="sT">--</b><button class="sq sm" type="button" id="sT+" aria-label="Tăng"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
+  <div class="fld"><label>Bù độ ẩm</label><div class="stp"><button class="sq sm" type="button" id="sH-" aria-label="Giảm"><svg class="i"><use href="#i-minus"/></svg></button><b id="sH">--</b><button class="sq sm" type="button" id="sH+" aria-label="Tăng"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
+  <p class="msg"></p><div class="ft"><button class="btn" type="button" data-close>Hủy</button><button class="btn pri" type="button" data-save>Lưu</button></div></div>
+
+ <div class="sheet" id="sTech" role="dialog" aria-modal="true" aria-labelledby="hTech"><div class="grip"></div><div class="sh"><h2 id="hTech">Thông tin kỹ thuật</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="i"><use href="#i-close"/></svg></button></div>
+  <div id="techKv"></div>
+  <div class="ft"><button class="btn" type="button" id="crashClr" hidden>Xóa báo lỗi</button><button class="btn" type="button" data-close>Đóng</button></div></div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const $=i=>document.getElementById(i),T_MIN=26,T_MAX=30;
+const MODES={cool:'Làm lạnh',dry:'Hút ẩm',fan:'Quạt'},MODE_EN={cool:'Cool',dry:'Dry',fan:'Fan'},MICON={cool:'snow',dry:'drop',fan:'fan'};
+const FANS={quiet:'Êm',low:'Thấp',medium_low:'Vừa-thấp',medium:'Vừa',medium_high:'Vừa-cao',high:'Cao',strong:'Mạnh',auto:'Tự động'};
+// Hút ẩm: 3 mức thay cho số điểm sương (dewOn = bắt đầu hút, dewOff = về làm lạnh)
+const DRY=[['dry','Khô thoáng','Hút sớm, phòng luôn khô. Tốn điện hơn',19,17],['bal','Cân bằng','Khuyên dùng cho phòng ngủ',21,19],['eco','Tiết kiệm','Chỉ hút khi rất ẩm',23,21]];
+const DAYS=[[1,'T2'],[2,'T3'],[3,'T4'],[4,'T5'],[5,'T6'],[6,'T7'],[0,'CN']];
+// Hãng máy lạnh phổ biến ở Việt Nam -> giao thức của thư viện IRremoteESP8266
+const BRANDS=[['MITSUBISHI_AC','Mitsubishi Electric'],['MITSUBISHI_HEAVY_152','Mitsubishi Heavy'],['DAIKIN','Daikin'],['PANASONIC_AC','Panasonic'],['LG','LG'],['SAMSUNG_AC','Samsung'],['TOSHIBA_AC','Toshiba'],['SHARP_AC','Sharp'],['GREE','Gree'],['MIDEA','Midea'],['HITACHI_AC','Hitachi'],['FUJITSU_AC','Fujitsu'],['ELECTRA_AC','Aux'],['TCL112AC','TCL'],['HAIER_AC','Haier'],['COOLIX','Hãng khác (Coolix)']];
+const AWAY=[[0,'Tắt máy','Tiết kiệm nhất'],[1,'Chỉ hút ẩm khi quá ẩm','Chống nấm mốc khi đi vắng lâu'],[2,'Chạy tiết kiệm','Vẫn tự động, nhưng giữ nhiệt độ cao hơn']];
+let S={fans:{}},C={},SY=null,busy=0,pendT=null,pendTo=0,tmr=null,ROOMS=[];
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ico=n=>'<svg class="i"><use href="#i-'+n+'"/></svg>';
+const f1=v=>v==null||isNaN(v)?'--':(+v).toFixed(1).replace('.',',');
+// ---- Gọi thẳng ESP32 trong WiFi nhà ----
+// ---- Đường truyền: trong nhà gọi thẳng kit (http); ngoài nhà (trang https trên GitHub Pages) đi qua MQTT ----
+// App mở trang ngoài nhà kèm thông tin kết nối sau dấu # (#r=...): phần này không gửi lên máy chủ nào.
+const MQ=location.protocol=='https:';
+const OPS={'GET /api/status':'status','GET /api/settings':'settings','POST /api/settings':'setSettings','POST /api/cmd':'cmd',
+ 'POST /api/resume':'resume','GET /api/history':'history','GET /api/log':'log','GET /api/sys':'sys','GET /api/meter':'meter',
+ 'POST /api/meter':'setMeter','POST /api/filterreset':'filterreset','GET /api/presence':'presence','POST /api/presence':'setPresence'};
+let RC={},mqc=null,mqStat=null,mqOn=null,pend={},mqRx=0,mqRetry=0,booted=false;
+if(MQ){const m=location.hash.match(/^#r=([A-Za-z0-9_-]+)/);
+ if(m){try{const t=atob(m[1].replace(/-/g,'+').replace(/_/g,'/'));RC=JSON.parse(decodeURIComponent(escape(t)));localStorage.setItem('smartacR',JSON.stringify(RC))}catch(e){}
+  history.replaceState(null,'',location.pathname+location.search+'#ctl')}
+ else{try{RC=JSON.parse(localStorage.getItem('smartacR')||'{}')}catch(e){}}}
+const TB=()=>'smartac/'+RC.kit+'/';
+class Res{constructor(c,b){this.status=c;this.ok=c>=200&&c<300;this.b=b}async text(){return this.b}async json(){return JSON.parse(this.b)}}
+const hex=b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+async function sign(keyHex,msg){const k=await crypto.subtle.importKey('raw',new Uint8Array(keyHex.match(/../g).map(h=>parseInt(h,16))),{name:'HMAC',hash:'SHA-256'},false,['sign']);
+ return hex(await crypto.subtle.sign('HMAC',k,new TextEncoder().encode(msg)))}
+function mqConnect(){if(!RC.kit||!RC.user||!RC.key){toast('Thiếu thông tin kết nối: mở app khi đang ở nhà một lần',0);return}
+ if(mqc)mqc.end(true);
+ mqc=mqtt.connect('wss://'+RC.host+':'+(RC.wss||8084)+'/mqtt',{username:RC.user,password:RC.pass,clientId:'smartac-app-'+hex(crypto.getRandomValues(new Uint8Array(4))),
+  clean:true,reconnectPeriod:5000,connectTimeout:10000,keepalive:60});
+ mqc.on('connect',()=>{mqRx=Date.now();mqRetry=0;mqc.subscribe([TB()+'esp/status',TB()+'esp/online',TB()+'esp/resp/#']);
+  mqReq('watch','');if(!booted){booted=true;boot()}});
+ mqc.on('message',(t,p)=>{mqRx=Date.now();const v=p.toString();
+  if(t==TB()+'esp/status'){mqStat=v;st()}else if(t==TB()+'esp/online'){mqOn=v=='1';st()}
+  else if(t.startsWith(TB()+'esp/resp/')){const q=t.split('/'),r=pend[q[4]];if(r){delete pend[q[4]];r(new Res(+q[5],v))}}});
+ mqc.on('error',e=>{if(/auth|authori[sz]ed|bad user|password/i.test(e.message)){mqc.end(true);toast('Máy chủ từ chối tài khoản app: mở app ở nhà một lần để nhận lại',0)}});
+ mqc.on('offline',()=>st())}
+// Điện thoại khóa màn hình / chuyển app có thể cắt kết nối mà thư viện không biết ngay: quá 40 giây không nhận gì thì kết nối lại
+async function mqReady(){if(mqc&&mqc.connected&&Date.now()-mqRx<40000)return true;
+ if(Date.now()-mqRetry>12000){mqRetry=Date.now();mqConnect()}
+ for(let i=0;i<60;i++){await new Promise(r=>setTimeout(r,250));if(mqc&&mqc.connected)return true}
+ return false}
+async function mqReq(op,body){if(!await mqReady())return new Res(503,'Chưa kết nối được máy chủ');
+ const id=hex(crypto.getRandomValues(new Uint8Array(8))),ts=Math.floor(Date.now()/1000),sig=await sign(RC.key,id+'\n'+ts+'\n'+op+'\n'+body);
+ return new Promise(res=>{pend[id]=res;mqc.publish(TB()+'phone/req',JSON.stringify({id,ts,op,body,sig}));
+  setTimeout(()=>{if(pend[id]){delete pend[id];res(new Res(504,mqOn===false?'Kit đang mất kết nối Internet':'Kit không trả lời'))}},10000)})}
+async function api(method,url,body){if(!MQ)return fetch(url,method=='GET'?undefined:{method,body});
+ if(url=='/api/status'&&mqStat)return new Res(200,mqStat);    // trạng thái kit tự gửi, không tốn lượt hỏi
+ const op=OPS[method+' '+url];if(!op)return new Res(400,'Việc này chỉ làm được khi ở nhà');
+ return mqReq(op,body||'')}
+const j=async u=>{const r=await api('GET',u);if(MQ&&!r.ok)throw new Error(await r.text());return r.json()};
+const post=(u,o)=>api('POST',u,JSON.stringify(o));
+function toast(t,ms){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);if(ms!==0)e._t=setTimeout(()=>e.classList.remove('on'),ms||2200)}
+async function cmd(o){busy++;toast('Đang gửi lệnh…',0);
+ try{const r=await post('/api/cmd',o);toast(r.ok?(o.swing||!C.autoOn?'Đã gửi':'Đã gửi · tự động tạm dừng'):await r.text(),r.ok?2200:4000)}catch(e){toast('Không kết nối được kit',4000)}
+ busy--;st()}
+async function save(o,sheet){const m=sheet?sheet.querySelector('.msg'):null;if(m)m.textContent='Đang lưu…';
+ try{const r=await post('/api/settings',o);if(!r.ok)throw new Error(await r.text());C=await r.json();fill();if(sheet)closeSheet();toast('Đã lưu');st()}
+ catch(e){if(m)m.textContent='Chưa lưu được: '+(e.message||'mất kết nối');else toast('Chưa lưu được',3000)}}
+// ---- Pop-up ----
+let cur=null;
+function openSheet(id){const s=$(id);if(!s)return;if(cur)cur.classList.remove('on');cur=s;
+ if(OPEN[id])OPEN[id](s);s.querySelectorAll('.msg').forEach(m=>m.textContent='');
+ $('ov').classList.add('on');s.classList.add('on');const f=s.querySelector('.x');if(f)f.focus()}
+function closeSheet(){if(!cur)return;cur.classList.remove('on');cur=null;$('ov').classList.remove('on')}
+$('ov').onclick=e=>{if(e.target==$('ov'))closeSheet()};
+document.addEventListener('keydown',e=>{if(e.key=='Escape')closeSheet()});
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeSheet);
+document.querySelectorAll('[data-sheet]').forEach(b=>b.onclick=()=>openSheet(b.dataset.sheet));
+document.querySelectorAll('.sheet [data-save]').forEach(b=>b.onclick=()=>{const s=b.closest('.sheet');SAVE[s.id]&&SAVE[s.id](s)});
+// Danh sách chọn một (pop-up)
+function opts(el,list,curV,pick){el.innerHTML=list.map(([v,t,d])=>'<button type="button" role="radio" class="opt'+(String(v)==String(curV)?' on':'')+'" aria-checked="'+(String(v)==String(curV))+'" data-v="'+esc(v)+'"><span class="rd"></span><span class="tx"><b>'+esc(t)+'</b>'+(d?'<span>'+esc(d)+'</span>':'')+'</span></button>').join('');
+ el.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{el.querySelectorAll('.opt').forEach(x=>{x.classList.toggle('on',x==b);x.setAttribute('aria-checked',x==b)});pick&&pick(b.dataset.v)})}
+function pills(el,list,curV,pick){el.innerHTML=list.map(([v,t])=>'<button type="button" aria-pressed="'+(String(v)==String(curV))+'" class="'+(String(v)==String(curV)?'on':'')+'" data-v="'+esc(v)+'">'+esc(t)+'</button>').join('');
+ el.querySelectorAll('button').forEach(b=>b.onclick=()=>{el.querySelectorAll('button').forEach(x=>{x.classList.toggle('on',x==b);x.setAttribute('aria-pressed',x==b)});el.dataset.v=b.dataset.v;pick&&pick(b.dataset.v)});el.dataset.v=curV}
+function days(el,mask){el.dataset.v=mask;el.innerHTML=DAYS.map(([b,n])=>'<button type="button" aria-pressed="'+!!(mask>>b&1)+'" class="'+(mask>>b&1?'on':'')+'" data-b="'+b+'">'+n+'</button>').join('');
+ el.querySelectorAll('button').forEach(e=>e.onclick=()=>days(el,+el.dataset.v^(1<<e.dataset.b)))}
+// Chọn giờ: 2 bánh xe cuộn (giờ 00–23, phút cách 5). Giá trị "HH:MM" nằm ở el.dataset.v
+const p2=n=>String(n).padStart(2,'0');
+function tpick(el,v){const [h,m]=(v||'00:00').split(':').map(Number);const mins=[];for(let i=0;i<60;i+=5)mins.push(i);if(!mins.includes(m)){mins.push(m);mins.sort((a,b)=>a-b)}
+ const hrs=[...Array(24).keys()];el.innerHTML='<div class="wh" aria-label="Giờ"></div><b>:</b><div class="wh" aria-label="Phút"></div>';const [wh,wm]=el.querySelectorAll('.wh');
+ const set=()=>{el.dataset.v=p2(wh._v)+':'+p2(wm._v)};
+ const wheel=(w,list,cur)=>{w.innerHTML=list.map(x=>'<div>'+p2(x)+'</div>').join('');const it=[...w.children],H=52;
+  const pick=i=>{i=Math.max(0,Math.min(list.length-1,i));it.forEach((d,k)=>d.classList.toggle('on',k==i));w._v=list[i];set()};
+  pick(list.indexOf(cur));requestAnimationFrame(()=>w.scrollTop=list.indexOf(cur)*H);
+  let t;w.onscroll=()=>{clearTimeout(t);t=setTimeout(()=>pick(Math.round(w.scrollTop/H)),60)};
+  it.forEach((d,k)=>d.onclick=()=>w.scrollTo({top:k*H,behavior:'smooth'}))};
+ wheel(wh,hrs,h);wheel(wm,mins,m)}
+// Ô số có nút − / +
+function stepper(id,v,mn,mx,st,fmt){const el=$(id);el.dataset.v=v;const show=()=>el.textContent=fmt(+el.dataset.v);show();
+ $(id+'-').onclick=()=>{el.dataset.v=Math.max(mn,Math.round((+el.dataset.v-st)*10)/10);show()};
+ $(id+'+').onclick=()=>{el.dataset.v=Math.min(mx,Math.round((+el.dataset.v+st)*10)/10);show()}}
+const sgn=(v,u)=>(v>0?'+':'')+String(v).replace('.',',')+u;
+const dayTxt=w=>w==127?'Hằng ngày':w==62?'T2 – T6':w==65?'T7, CN':DAYS.filter(([b])=>w>>b&1).map(d=>d[1]).join(', ')||'Không ngày nào';
+const dryLevel=()=>{if(!C.dryByDew)return null;const x=DRY.find(d=>d[3]==C.dewOn&&d[4]==C.dewOff);return x?x[0]:null};
+// ---- Mở pop-up: điền giá trị hiện tại ----
+let M=null;
+// ---- Tự nhận biết ra / vào nhà ----
+let P=null;
+function ago(x){return x<0?'chưa thấy':x<90?'vừa thấy':x<3600?'thấy '+Math.round(x/60)+' phút trước':'thấy '+Math.round(x/3600)+' giờ trước'}
+function presFill(){if(!P)return;const ph=P.phones||[];
+ $('aPh').innerHTML=ph.length?ph.map(o=>'<div class="fld"><label>'+(o.me?'Điện thoại này':'Điện thoại')+' · '+esc(o.ip)+'<span class="d">'+ago(o.ago)+'</span></label><button class="btn sm" type="button" data-del="'+o.i+'">Xóa</button></div>').join(''):'<p class="d">Chưa có điện thoại nào. Bấm nút dưới trên điện thoại của từng người.</p>';
+ $('aPh').querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{try{P=await (await post('/api/phone/del',{i:+b.dataset.del})).json();presFill()}catch(e){toast('Không kết nối được kit',3000)}});
+ const me=ph.some(o=>o.me);$('aAdd').hidden=me||ph.length>=3;
+ const t=P.since?new Date(P.since*1000):null,hm=t?' từ '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0'):'';
+ $('aState').textContent=!P.on?'Đang tắt: máy lạnh chạy như bình thường dù có ai ở nhà hay không.':!ph.length?'Cần thêm ít nhất một điện thoại.':P.home==0?'Không ai ở nhà'+hm+'.':P.home==1?'Có người ở nhà.':'Đang kiểm tra…'}
+async function pres(){$('aPh').innerHTML='<p class="d">Đang tải…</p>';try{P=await j('/api/presence');presFill()}catch(e){$('aPh').innerHTML='<p class="d">Không tải được</p>'}}
+$('aAdd').onclick=async()=>{try{const r=await post('/api/phone/add',{});if(!r.ok){toast(await r.text(),4000);return}P=await r.json();presFill();toast('Đã thêm điện thoại này')}catch(e){toast('Không kết nối được kit',3000)}};
+const vnd=n=>Math.round(n).toLocaleString('vi-VN')+' đ',kwh=wh=>(wh/1000).toFixed(wh<10000?2:1).replace('.',',')+' kWh';
+async function meter(){try{M=await j('/api/meter')}catch(e){return}
+ const pr=M.price/1000;[['Day','dayWh'],['Mon','monWh'],['Prev','prevWh']].forEach(([k,f])=>{$('m'+k).textContent=vnd(M[f]*pr);$('k'+k).textContent=kwh(M[f])});
+ $('dPower').textContent='Máy lạnh '+M.acW.toLocaleString('vi-VN')+' W · quạt '+M.fanW+' W · '+M.price.toLocaleString('vi-VN')+' đ/kWh';
+ $('mNoTime').hidden=!!M.timeOk;chart();
+ const h=Math.floor(M.runH),lim=M.filterH;$('vFilter').textContent=lim?lim+' giờ':'Không nhắc';
+ $('fBar').hidden=!lim;$('fFill').style.width=lim?Math.min(100,M.runH/lim*100)+'%':'0';$('fBar').classList.toggle('due',!!M.filterDue);
+ $('fTx').textContent=!lim?'Đã chạy '+h+' giờ từ lần vệ sinh trước':M.filterDue?'Đến hạn vệ sinh lưới lọc':'Còn khoảng '+Math.max(0,Math.ceil(lim-M.runH))+' giờ chạy nữa thì vệ sinh';
+ $('fSub').textContent=lim?'Đã chạy '+h+' / '+lim+' giờ từ lần vệ sinh trước':'Đang tắt nhắc vệ sinh'}
+// ---- Biểu đồ tiền điện theo ngày / tháng ----
+let CV='d',CI=-1;
+function chart(){$('cCard').hidden=!(M&&M.days);if($('cCard').hidden)return;const pr=M.price/1000,d=M.date?new Date(M.date+'T12:00'):new Date();
+ const isD=CV=='d',arr=isD?M.days:M.months,n=arr.length,mx=Math.max(...arr,1);if(CI<0||CI>=n)CI=n-1;
+ const lab=i=>{const t=new Date(d);if(isD)t.setDate(t.getDate()-(n-1-i));else{t.setDate(1);t.setMonth(t.getMonth()-(n-1-i))}return t};
+ const bars=$('cBars');bars.className='chart'+(isD?'':' m');
+ bars.innerHTML=arr.map((v,i)=>'<button type="button" class="'+(i==CI?'on':'')+'" data-i="'+i+'" aria-label="'+i+'"><i style="height:'+(v/mx*100)+'%"></i></button>').join('');
+ bars.querySelectorAll('button').forEach(b=>b.onclick=()=>{CI=+b.dataset.i;chart()});
+ $('cAx').innerHTML=arr.map((v,i)=>{const t=lab(i);return '<span>'+(isD?((n-1-i)%7==0?t.getDate()+'/'+(t.getMonth()+1):''):'T'+(t.getMonth()+1))+'</span>'}).join('');
+ const t=lab(CI),v=arr[CI];
+ $('cLab').textContent=isD?(CI==n-1?'Hôm nay, ngày ':'Ngày ')+t.getDate()+'/'+(t.getMonth()+1):(CI==n-1?'Tháng này, tháng ':'Tháng ')+(t.getMonth()+1)+'/'+t.getFullYear();
+ $('cVal').textContent=vnd(v*pr);$('cKwh').textContent=kwh(v);
+ const used=arr.filter(x=>x>0),tot=arr.reduce((a,b)=>a+b,0);
+ $('cSum').textContent=(isD?'30 ngày: ':'12 tháng: ')+vnd(tot*pr)+' · trung bình '+vnd(used.length?tot/used.length*pr:0)+(isD?' mỗi ngày có chạy':' mỗi tháng có chạy')}
+$('cSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{CV=b.dataset.v;CI=-1;$('cSeg').querySelectorAll('button').forEach(x=>{x.classList.toggle('on',x==b);x.setAttribute('aria-checked',x==b)});chart()});
+$('fReset').onclick=async()=>{if(!confirm('Xác nhận đã vệ sinh lưới lọc? Số giờ chạy sẽ đếm lại từ 0.'))return;try{await post('/api/filterreset',{});toast('Đã ghi nhận, đếm lại từ 0')}catch(e){toast('Không kết nối được kit',3000)}meter();st()};
+const OPEN={
+ sPower:()=>{$('pAc').value=M?M.acW:'';$('pPrice').value=M?M.price:'';$('pFan').value=M?M.fanW:''},
+ sFilter:()=>{const L=[[200,'200 giờ'],[300,'300 giờ'],[500,'500 giờ'],[0,'Không nhắc']];if(M&&!L.find(x=>x[0]==M.filterH))L.unshift([M.filterH,M.filterH+' giờ']);pills($('fH'),L,M?M.filterH:300)},
+ sFan:()=>opts($('fanOpts'),(S.fans[S.acMode]||[]).map(f=>[f,FANS[f]||f]),S.acFan,v=>{closeSheet();cmd({on:true,fan:v})}),
+ sSwing:()=>opts($('swOpts'),[['on','Lên xuống','Gió đảo đều cả phòng'],['off','Cố định','Giữ cánh gió một chỗ']],S.swingOn?'on':'off',v=>{closeSheet();cmd({swing:v})}),
+ sRooms:()=>opts($('roomOpts'),ROOMS.map(r=>[r.ip,r.name||r.ip,r.self?'Đang xem':'']),(ROOMS.find(r=>r.self)||{}).ip,ip=>{const r=ROOMS.find(x=>x.ip==ip);if(r&&!r.self)location.href='http://'+ip+'/'+location.hash;else closeSheet()}),
+ sCool:()=>{stepper('cT',C.coolTemp,16,30,1,v=>v+'°C');const fl=(S.fans.cool||[]).map(f=>[f,FANS[f]||f]);if(C.coolFan&&!fl.find(x=>x[0]==C.coolFan))fl.push([C.coolFan,FANS[C.coolFan]||C.coolFan]);pills($('cFan'),fl,C.coolFan)},
+ sDry:()=>{const l=dryLevel();const L=DRY.map(d=>[d[0],d[1],d[2]]);if(!l)L.push(['keep','Giữ cài đặt riêng',C.dryByDew?'Điểm sương '+C.dewOn+'° / '+C.dewOff+'°':'Theo độ ẩm '+C.dryOn+'% / '+C.dryOff+'%']);opts($('dryOpts'),L,l||'keep',v=>$('dryOpts').dataset.v=v);$('dryOpts').dataset.v=l||'keep'},
+ sAway:()=>{$('aOn').checked=!!C.autoAway;pres();pills($('aAfter'),[[10,'10 phút'],[20,'20 phút'],[30,'30 phút'],[60,'1 giờ']],C.awayAfter||20);const v=+C.awayMode;opts($('awayOpts'),AWAY,v,x=>{$('awayOpts').dataset.v=x;$('aTempF').hidden=x!='2'});$('awayOpts').dataset.v=v;$('aTempF').hidden=v!=2;stepper('aT',C.awayTemp,24,30,1,v=>v+'°C')},
+ sMold:()=>{$('mOn').checked=!!C.moldOn;const L=[5,10,15,20,30].map(m=>[m,m+' phút']);if(!L.find(x=>x[0]==C.moldMin))L.push([C.moldMin,C.moldMin+' phút']);pills($('mMin'),L,C.moldMin)},
+ sPause:()=>{const L=[[0,'Không tạm dừng'],[15,'15 phút'],[30,'30 phút'],[60,'1 giờ'],[120,'2 giờ']];if(!L.find(x=>x[0]==C.pauseMin))L.push([C.pauseMin,C.pauseMin+' phút']);pills($('pMin'),L,C.pauseMin)},
+ sOn:()=>{tpick($('onT'),C.winStart);days($('onDays'),C.onWeek)},
+ sOff:()=>{tpick($('offT'),C.winEnd);days($('offDays'),C.offWeek)},
+ sSleep:()=>{tpick($('ssT'),C.sleepStart);tpick($('seT'),C.sleepEnd)},
+ sRoom:()=>{$('rName').value=C.room||''},
+ sIr:()=>{const draw=()=>{const p=SY&&SY.irProto||'';$('irP').textContent=p?(BRANDS.find(b=>b[0]==p)||[p,p])[1]:'Chưa có';$('irL').textContent=SY&&SY.irLast||'--';$('irTest').disabled=!p;
+  opts($('irBrands'),BRANDS.map(b=>[b[0],b[1],'']),p,async v=>{try{const r=await post('/api/irproto',{proto:v});toast(r.ok?'Đã chọn, bấm Phát thử để kiểm tra':await r.text(),3000)}catch(e){toast('Không kết nối được kit',3000)}await sys();draw();st()})};sys().then(draw)},
+ sSens:()=>{stepper('sT',C.tOff,-5,5,.1,v=>sgn(v,'°C'));stepper('sH',C.rhOff,-20,20,1,v=>sgn(v,'%'))},
+ sTech:()=>{sys().then(tech)},
+ sCloud:()=>{$('cP').value='';$('cAP').value='';['cP','cAP'].forEach(k=>$(k).type='password');document.querySelectorAll('[data-eye]').forEach(b=>b.textContent='Hiện');cloud(true)}};
+// ---- Lưu từng pop-up ----
+async function saveMeter(o,s){const m=s.querySelector('.msg');m.textContent='Đang lưu…';
+ try{const r=await post('/api/meter',o);if(!r.ok)throw new Error(await r.text());M=await r.json();closeSheet();meter();toast('Đã lưu')}catch(e){m.textContent='Chưa lưu được: '+(e.message||'mất kết nối')}}
+// ---- Điều khiển ngoài nhà ----
+let CL=null;
+function cloudTx(){return !CL?'--':!CL.on?'Chưa cài':CL.connected?'Đã kết nối':'Chưa kết nối'}
+async function cloud(fill){try{CL=await j('/api/cloud')}catch(e){CL=null}
+ $('dCloud').textContent=cloudTx();$('icCloud').className='ic'+(CL&&CL.connected?'':' off');
+ if(fill&&CL){$('cU').value=CL.user||'';$('cAU').value=CL.appUser||'';$('cP').placeholder=CL.hasPass?'đã lưu (để trống = giữ nguyên)':'chưa nhập';$('cAP').placeholder=CL.hasAppPass?'đã lưu (để trống = giữ nguyên)':'chưa nhập';
+  $('cSt').textContent=!CL.on?'Chưa cài tài khoản: chỉ điều khiển được khi ở nhà.':(CL.connected?'Đã kết nối máy chủ. Điện thoại đã mở app ở nhà một lần thì điều khiển được từ bất cứ đâu.':'Chưa kết nối: '+(CL.why||'đang kết nối')+'.')+(CL.hasAppPass?'':' Chưa nhập mật khẩu của app.')+(CL.reqBad?' · Lệnh bị từ chối: '+CL.reqBad+(CL.lastReject?' ('+CL.lastReject+')':''):'')}}
+document.querySelectorAll('[data-eye]').forEach(b=>b.onclick=()=>{const i=$(b.dataset.eye),sh=i.type=='password';i.type=sh?'text':'password';b.textContent=sh?'Ẩn':'Hiện'});
+let cNewAt=0;const CNEW=$('cNew').textContent;
+$('cNew').onclick=async()=>{const b=$('cNew');if(Date.now()-cNewAt>5000){cNewAt=Date.now();b.textContent='Bấm lần nữa để đổi khóa ghép';setTimeout(()=>b.textContent=CNEW,5000);return}
+ cNewAt=0;b.textContent=CNEW;try{const r=await post('/api/pairkey/new',{});if(!r.ok)throw 0;toast('Đã đổi khóa ghép')}catch(e){toast('Không đổi được',3000)}};
+const SAVE={
+ sCloud:async s=>{const m=s.querySelector('.msg');m.textContent='Đang lưu…';
+  try{const r=await post('/api/cloud',{user:$('cU').value.trim(),pass:$('cP').value,appUser:$('cAU').value.trim(),appPass:$('cAP').value});
+   if(!r.ok)throw new Error(await r.text());closeSheet();toast('Đã lưu, kit đang kết nối lại');setTimeout(()=>cloud(false),4000)}catch(e){m.textContent='Chưa lưu được: '+(e.message||'mất kết nối')}},
+ sPower:s=>{const a=parseInt($('pAc').value),p=parseInt($('pPrice').value),f=parseInt($('pFan').value);
+  if(!(a>=100&&a<=6000)){s.querySelector('.msg').textContent='Công suất máy lạnh từ 100 đến 6000 W';return}
+  if(!(p>=500&&p<=20000)){s.querySelector('.msg').textContent='Giá điện từ 500 đến 20.000 đ/kWh';return}
+  saveMeter({acW:a,price:p,fanW:f>=5&&f<=300?f:40},s)},
+ sFilter:s=>saveMeter({filterH:+$('fH').dataset.v},s),
+ sCool:s=>save({coolTemp:+$('cT').dataset.v,coolFan:$('cFan').dataset.v},s),
+ sDry:s=>{const v=$('dryOpts').dataset.v;if(v=='keep'){closeSheet();return}const d=DRY.find(x=>x[0]==v);save({dryByDew:true,dewOn:d[3],dewOff:d[4]},s)},
+ sAway:async s=>{try{const r=await post('/api/presence',{on:$('aOn').checked,after:+$('aAfter').dataset.v});if(!r.ok)throw 0;P=await r.json()}catch(e){s.querySelector('.msg').textContent='Chưa lưu được: mất kết nối';return}
+ save({awayMode:+$('awayOpts').dataset.v,awayTemp:+$('aT').dataset.v},s)},
+ sMold:s=>save({moldOn:$('mOn').checked,moldMin:+$('mMin').dataset.v},s),
+ sPause:s=>save({pauseMin:+$('pMin').dataset.v},s),
+ sOn:s=>save({winStart:$('onT').dataset.v,onWeek:+$('onDays').dataset.v},s),
+ sOff:s=>save({winEnd:$('offT').dataset.v,offWeek:+$('offDays').dataset.v},s),
+ sSleep:s=>save({sleepStart:$('ssT').dataset.v,sleepEnd:$('seT').dataset.v},s),
+ sRoom:s=>{const n=$('rName').value.trim();if(!n){s.querySelector('.msg').textContent='Nhập tên phòng';return}save({room:n},s).then(rooms)},
+ sSens:s=>save({tOff:+$('sT').dataset.v,rhOff:+$('sH').dataset.v},s)};
+// ---- Trạng thái (mỗi 5 giây) ----
+function rhTag(h){return h==null||isNaN(h)?['--','']:h<40?['Khô','blue']:h<=60?['Dễ chịu','']:h<=70?['Hơi ẩm','org']:['Rất ẩm','org']}
+async function st(){let s;try{s=S=await j('/api/status')}catch(e){$('dot').className='dot off';$('connTx').textContent='Mất kết nối kit';return}
+ $('dot').className='dot'+(MQ&&mqOn===false?' off':'');const where=MQ?(mqOn===false?'Kit mất kết nối':'Qua Internet'):'Trong mạng nhà';$('connTx').textContent=s.time&&s.time!='--:--'?where+' · '+s.time:where;
+ if(s.room){$('roomName').textContent=s.room;document.title=s.room+' · SmartAC'}
+ $('bSafe').hidden=!s.safeMode;$('bIr').hidden=!!s.irLearned;
+ $('vSrc').textContent=s.src&&s.src!='SHT40'&&s.src!='không có'?'Số đo từ '+s.src:'Trong phòng';$('vT').textContent=f1(s.t)+'°';$('vH').textContent=s.rh==null?'--%':Math.round(s.rh)+'%';
+ const tg=rhTag(s.rh);$('vHtag').textContent=tg[0];$('vHtag').className='tag'+(tg[1]?' '+tg[1]:'');
+ const on=s.acOn,m=s.acMode,noT=!on||m=='fan';
+ $('acSt').innerHTML=ico(on?MICON[m]||'snow':'power')+'<span>'+(on?(MODE_EN[m]||'On'):'Off')+'</span>';
+ $('pwr').classList.toggle('on',!!on);$('pwr').setAttribute('aria-label',on?'Tắt máy lạnh':'Bật máy lạnh');
+ if(pendT!=null&&pendTo&&(s.acTemp==pendT||Date.now()>pendTo)){pendT=null;pendTo=0}
+ if(pendT==null)$('tset').textContent=noT?'--':s.acTemp+'°C';
+ $('tlab').textContent=m=='fan'&&on?'Chế độ quạt không đặt nhiệt độ':'Nhiệt độ đặt';
+ $('tm').disabled=$('tp').disabled=noT;
+ const ml=Object.keys(MODES).filter(k=>!Object.keys(s.fans).length||s.fans[k]);
+ const k=ml.join()+'|'+(on?m:'');if($('modes')._k!=k){$('modes')._k=k;
+  $('modes').innerHTML=ml.map(x=>'<button type="button" role="radio" aria-checked="'+(on&&x==m)+'" class="'+(on&&x==m?'on':'')+'" data-v="'+x+'"><b>'+MODE_EN[x]+'</b><small>'+MODES[x]+'</small></button>').join('');
+  $('modes').querySelectorAll('button').forEach(b=>b.onclick=()=>cmd({on:true,mode:b.dataset.v}))}
+ $('fanNow').textContent=on?(FANS[s.acFan]||s.acFan||'--'):'--';$('rFan').disabled=!on;
+ const sw=!!(s.swingOk&&on);$('rSwing').hidden=!sw;$('swNow').textContent=s.swingOn?'Lên xuống':'Cố định';
+ $('bPause').hidden=!s.paused;$('bFilter').hidden=!s.filterDue;
+ const rs=s.mold?'Đang chạy quạt chống mốc trước khi tắt':s.reason||'--';$('reason').textContent=s.paused?'Đang tạm dừng vì bạn vừa chỉnh tay':rs;
+ $('slpNow').textContent=s.sleepAdd>0?'Đang trong giờ ngủ: +'+s.sleepAdd+'°C':C.sleepOn?'Bật · '+C.sleepStart+' – '+C.sleepEnd:'Đang tắt';
+ if(cur&&cur.id=='sFan')OPEN.sFan()}
+function bump(d){if(!S.acOn||S.acMode=='fan')return;const b=pendT!=null?pendT:S.acTemp;pendT=Math.max(T_MIN,Math.min(T_MAX,b+d));$('tset').textContent=pendT+'°C';
+ if((b+d<T_MIN||b+d>T_MAX))toast('Đặt từ '+T_MIN+' đến '+T_MAX+'°C');
+ clearTimeout(tmr);pendTo=0;tmr=setTimeout(async()=>{const t=pendT;await cmd({on:true,temp:t});if(pendT==t){pendTo=Date.now()+5000;st()}},600)}
+$('tm').onclick=()=>bump(-1);$('tp').onclick=()=>bump(1);
+$('pwr').onclick=()=>cmd({on:!S.acOn});
+$('rFan').onclick=()=>openSheet('sFan');$('rSwing').onclick=()=>openSheet('sSwing');
+$('resume').onclick=async()=>{await post('/api/resume',{});toast('Đã chạy tự động lại');st()};
+$('bNormal').onclick=async()=>{toast('Đang khởi động lại kit…',6000);try{await post('/api/normal',{})}catch(e){}setTimeout(()=>location.reload(),8000)};
+$('qAuto').onchange=e=>save({autoOn:e.target.checked});
+$('qSleep').onchange=e=>save({sleepOn:e.target.checked});
+$('irTest').onclick=async()=>{toast('Đang phát…',0);try{const r=await post('/api/irtest',{});toast(await r.text(),r.ok?4000:6000)}catch(e){toast('Không kết nối được kit',4000)}};
+// ---- Cài đặt → các dòng tóm tắt ----
+function fill(){if(C.autoOn==null)return;
+ $('qAuto').checked=C.autoOn;$('qSleep').checked=C.sleepOn;
+ $('vCool').textContent=C.coolTemp+'°C';$('dCool').textContent='Giữ '+C.coolTemp+'°C · quạt '+(FANS[C.coolFan]||'giữ nguyên')+' · tăng quạt khi nóng';
+ const l=dryLevel();$('vDry').textContent=l?DRY.find(d=>d[0]==l)[1]:'Riêng';
+ const am=+C.awayMode;$('vAway').textContent=!C.autoAway?'Tắt':C.away?'Không ai ở nhà':'Có người';$('vAway').parentNode.className='v'+(C.autoAway&&C.away?' org':'');
+ $('dAway').textContent='Khi không ai ở nhà: '+(am==2?'chạy tiết kiệm '+C.awayTemp+'°C':am==1?'chỉ hút ẩm khi quá ẩm':'tắt máy');$('icAway').className='ic'+(C.autoAway?'':' off');
+ $('vMold').textContent=C.moldOn?C.moldMin+' phút':'Tắt';$('icMold').className='ic'+(C.moldOn?'':' off');
+ $('vPause').textContent=C.pauseMin?(C.pauseMin>=60&&C.pauseMin%60==0?C.pauseMin/60+' giờ':C.pauseMin+' phút'):'Không';
+ $('vOn').textContent=C.winStart;$('dOn').textContent=dayTxt(C.onWeek);$('vOff').textContent=C.winEnd;$('dOff').textContent=dayTxt(C.offWeek);
+ $('tmrOff').hidden=!!C.autoOn;$('todayTx').textContent='Hôm nay: '+today();
+ $('vSs').textContent=C.sleepStart;$('vSe').textContent=C.sleepEnd;
+ $('vRoom').textContent=C.room||'--';$('dSens').textContent='Nhiệt độ '+sgn(C.tOff,'°C')+' · Độ ẩm '+sgn(C.rhOff,'%');
+ const s=$('cBoost').querySelector('span');s.textContent='Phòng nóng hơn mức mong muốn '+String(C.boostT1).replace('.',',')+'°C thì quạt Vừa; hơn '+String(C.boostT2).replace('.',',')+'°C thì quạt Cao và hạ nhiệt độ đặt 1°C, tối đa 30 phút rồi về lại nhiệt độ ban đầu.'}
+function today(){const d=new Date().getDay(),on=C.onWeek>>d&1,off=C.offWeek>>d&1;
+ const a=[off?[C.winEnd,'tắt '+C.winEnd]:null,on?[C.winStart,'bật '+C.winStart]:null].filter(Boolean).sort().map(x=>x[1]);
+ return a.length?a.join(', ')+(off?'':' (sáng không tắt)'):'không bật, không tắt'}
+async function load(){C=await j('/api/settings');fill()}
+// ---- Thông tin kỹ thuật (thu gọn tab ESP32 cũ) ----
+async function sys(){try{SY=await j('/api/sys')}catch(e){}
+ if(SY){$('dWifi').textContent=(SY.ssid||'--')+' · '+(SY.rssi>-60?'sóng tốt':SY.rssi>-75?'sóng vừa':'sóng yếu');$('dAddr').textContent=(SY.mdns||'')+(SY.mdns?' · ':'')+(SY.ip||'');
+  $('dIr').textContent=SY.irProto?'Đã học: '+SY.irProto:'Chưa học';}}
+function tech(){if(!SY){$('techKv').innerHTML='<p class="d">Không đọc được thông tin.</p>';return}const s=SY,kb=v=>Math.round(v/1024)+' KB';
+ const dur=x=>{const d=Math.floor(x/86400),h=Math.floor(x%86400/3600),m=Math.floor(x%3600/60);return (d?d+' ngày ':'')+h+' giờ '+m+' phút'};
+ const c=s.crash;const r=[['Trạng thái',s.safeMode?'Chế độ an toàn':s.tempWarm?'Chip nóng, đang hạ tốc độ':'Bình thường'],['Nhiệt độ chip',s.chipTemp!=null?f1(s.chipTemp)+'°C':'--'],
+  ['RAM trống / thấp nhất',kb(s.heapFree)+' / '+kb(s.heapMin)],['Đã chạy',dur(s.uptime)],['Lần khởi động gần nhất do',s.resetReason],['Số lần treo / lỗi',s.crashes],
+  ['Cảm biến SHT40',s.shtOk+' lần đọc · '+s.shtErr+' lỗi'],['Thời gian phát IR',s.irUs?(s.irUs/1000).toFixed(1)+' ms (nhanh nhất '+(s.irUsMin/1000).toFixed(1)+', chậm nhất '+(s.irUsMax/1000).toFixed(1)+')':'chưa phát'],['Giờ lấy từ',{ntp:'Internet',phone:'điện thoại',none:'chưa có'}[s.timeSrc]||'--'],['WiFi',(s.ssid||'--')+' · kênh '+s.channel+' · '+s.rssi+' dBm'],
+  ['MAC',s.mac],['Chip',s.chip+' · '+s.cpuMHz+' MHz'],['Bản firmware',s.build]];
+ if(c)r.push(['Sự cố gần nhất',c.reason+' lúc '+c.step+(c.task?' · '+c.task:'')+(c.pc?' · PC '+c.pc:'')]);
+ $('techKv').innerHTML=r.map(x=>'<div class="kv"><span>'+esc(x[0])+'</span><span>'+esc(x[1])+'</span></div>').join('');$('crashClr').hidden=!c}
+$('crashClr').onclick=async()=>{await post('/api/crashclear',{});await sys();tech()};
+// ---- Tab ----
+const TABS=['ctl','auto','use','set'];
+function tab(p){if(!TABS.includes(p))p='ctl';closeSheet();document.querySelectorAll('.pg').forEach(e=>e.classList.toggle('on',e.id=='p-'+p));
+ document.querySelectorAll('nav.tabs a').forEach(a=>{const o=a.dataset.p==p;a.classList.toggle('on',o);if(o)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+ scrollTo(0,0);if(p=='set'){sys();cloud(false)}if(p=='use')meter();if(p!='ctl')load().catch(()=>{})}
+onhashchange=()=>tab(location.hash.slice(1));
+// ---- Nhiều phòng: mỗi phòng 1 kit; bấm tên phòng để chuyển sang kit khác ----
+async function rooms(){if(APP)return;try{ROOMS=await j('/api/rooms')}catch(e){return}ROOMS.sort((x,y)=>(x.name||'').localeCompare(y.name||'','vi'));$('roomChev').hidden=ROOMS.length<2}
+// Mở trong app SmartAC (?app=1): app lo danh sách phòng, bấm tên phòng = quay về danh sách
+const APP=/[?&]app=1/.test(location.search)&&window.SmartAC;
+if(APP)$('appBack').hidden=false;
+$('roomBtn').onclick=()=>{if(APP)SmartAC.postMessage('back');else if(ROOMS.length>1)openSheet('sRooms')};
+function boot(){if(!MQ){rooms();post('/api/time',{ts:Math.floor(Date.now()/1000)}).catch(()=>{})}load().catch(()=>{}).then(st).then(sys)}
+tab(location.hash.slice(1));
+if(MQ){['[data-sheet=sIr]','[data-sheet=sCloud]','a.row[href="/wifi"]'].forEach(q=>{const e=document.querySelector(q);if(e)e.hidden=true});
+ const a=$('dAddr');if(a)a.closest('.row').hidden=true;
+ const sc=document.createElement('script');sc.src='../mqtt.min.js';sc.onload=mqConnect;sc.onerror=()=>toast('Không tải được thư viện MQTT',6000);document.head.appendChild(sc);
+ setInterval(()=>{if(!document.hidden)mqReq('watch','')},60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)mqReq('watch','')})}
+else boot();
+setInterval(()=>{if(!busy&&!document.hidden)st()},5000);
+setInterval(()=>{if(!document.hidden)rooms()},60000);
+</script></body></html>
