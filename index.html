@@ -372,8 +372,8 @@ input[type=text]{width:100%}
   <p class="d">Chọn mức khô của phòng. ESP32 tính điểm sương từ nhiệt độ và độ ẩm, tự quyết định khi nào hút ẩm.</p>
   <div class="opts" id="dryOpts"></div>
   <div id="dryCus">
-   <div class="fld"><label>Hút ẩm khi điểm sương từ<span class="d">21° là oi, 24° là rất oi</span></label><div class="stp"><button class="sq sm" type="button" id="dOn-" aria-label="Giảm"><svg class="i"><use href="#i-minus"/></svg></button><b id="dOn">--</b><button class="sq sm" type="button" id="dOn+" aria-label="Tăng"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
-   <div class="fld"><label>Về làm lạnh khi điểm sương từ</label><div class="stp"><button class="sq sm" type="button" id="dOff-" aria-label="Giảm"><svg class="i"><use href="#i-minus"/></svg></button><b id="dOff">--</b><button class="sq sm" type="button" id="dOff+" aria-label="Tăng"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
+   <div class="fld"><label>Hút ẩm khi điểm sương từ<span class="d">21° là oi, 24° là rất oi</span></label><div class="stp"><button class="sq sm" type="button" id="dwOn-" aria-label="Giảm"><svg class="i"><use href="#i-minus"/></svg></button><b id="dwOn">--</b><button class="sq sm" type="button" id="dwOn+" aria-label="Tăng"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
+   <div class="fld"><label>Về làm lạnh khi điểm sương từ</label><div class="stp"><button class="sq sm" type="button" id="dwOff-" aria-label="Giảm"><svg class="i"><use href="#i-minus"/></svg></button><b id="dwOff">--</b><button class="sq sm" type="button" id="dwOff+" aria-label="Tăng"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
   </div>
   <div class="lab">Quạt khi hút ẩm</div><div class="pills" id="dFan"></div>
   <p class="msg"></p><div class="ft"><button class="btn" type="button" data-close>Hủy</button><button class="btn pri" type="button" data-save>Lưu</button></div></div>
@@ -612,7 +612,7 @@ const OPEN={
   stepper('b1',C.boostT1,.5,3,.1,deg);stepper('b2',C.boostT2,1,5,.1,deg)},
  sDry:()=>{const l=dryLevel()||'cus';const L=DRY.map(d=>[d[0],d[1],d[2]]).concat([['cus','Tùy chỉnh','Tự đặt ngưỡng điểm sương']]);
   const show=v=>{$('dryCus').hidden=v!='cus'};opts($('dryOpts'),L,l,show);show(l);
-  stepper('dOn',C.dewOn,15,26,1,v=>v+'°C');stepper('dOff',C.dewOff,12,25,1,v=>v+'°C');pills($('dFan'),fanList('dry',C.dryFan),C.dryFan||'')},
+  stepper('dwOn',C.dewOn,15,26,1,v=>v+'°C');stepper('dwOff',C.dewOff,12,25,1,v=>v+'°C');pills($('dFan'),fanList('dry',C.dryFan),C.dryFan||'')},
  sAway:()=>{$('aOn').checked=!!C.autoAway;$('aPh').value=C.phones||'';$('aState').textContent=presTxt(S.pres);
   pills($('aAfter'),[[10,'10 phút'],[20,'20 phút'],[30,'30 phút'],[60,'1 giờ']].concat([10,20,30,60].includes(+C.awayAfter)?[]:[[C.awayAfter,C.awayAfter+' phút']]),C.awayAfter||20);
   const vis=x=>{$('aTempF').hidden=x!='2';$('aDryF').hidden=x!='1'};opts($('awayOpts'),AWAY,+C.awayMode,vis);vis(String(C.awayMode));
@@ -633,7 +633,7 @@ const SAVE={
  sCool:s=>{const b1=+$('b1').dataset.v,b2=+$('b2').dataset.v;if(b2<=b1){s.querySelector('.msg').textContent='Mức quạt Cao phải lớn hơn mức quạt Vừa';return}
   save({coolTemp:+$('cT').dataset.v,coolFan:$('cFan').dataset.v,boostT1:b1,boostT2:b2},s)},
  sDry:s=>{const v=$('dryOpts').dataset.v,fan=$('dFan').dataset.v;
-  if(v=='cus'){const a=+$('dOn').dataset.v,b=+$('dOff').dataset.v;if(b>=a){s.querySelector('.msg').textContent='Ngưỡng về làm lạnh phải thấp hơn ngưỡng hút ẩm';return}save({dryByDew:true,dewOn:a,dewOff:b,dryFan:fan},s);return}
+  if(v=='cus'){const a=+$('dwOn').dataset.v,b=+$('dwOff').dataset.v;if(b>=a){s.querySelector('.msg').textContent='Ngưỡng về làm lạnh phải thấp hơn ngưỡng hút ẩm';return}save({dryByDew:true,dewOn:a,dewOff:b,dryFan:fan},s);return}
   const d=DRY.find(x=>x[0]==v);save({dryByDew:true,dewOn:d[3],dewOff:d[4],dryFan:fan},s)},
  sAway:s=>save({...($('aOn').checked?{}:{away:false}),awayMode:+$('awayOpts').dataset.v,awayTemp:+$('aT').dataset.v,awayDryOn:+$('aD').dataset.v,
   autoAway:$('aOn').checked,phones:$('aPh').value.trim(),awayAfter:+$('aAfter').dataset.v},s),
