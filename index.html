@@ -301,7 +301,7 @@ input[type=text]{width:100%}
  <div class="card list">
   <button class="row" type="button" data-sheet="sCool"><span class="ic"><svg class="i"><use href="#i-snow"/></svg></span><span class="tx"><span class="t">Làm mát</span><span class="d" id="dCool">--</span></span><span class="v"><span id="vCool">--</span><svg class="i"><use href="#i-chev"/></svg></span></button>
   <button class="row" type="button" data-sheet="sDry"><span class="ic"><svg class="i"><use href="#i-drop"/></svg></span><span class="tx"><span class="t">Hút ẩm thông minh</span><span class="d" id="dDry">Phòng ẩm thì tự hút ẩm, đủ khô thì về làm lạnh</span></span><span class="v"><span id="vDry">--</span><svg class="i"><use href="#i-chev"/></svg></span></button>
-  <button class="row" type="button" data-sheet="sAway"><span class="ic" id="icAway"><svg class="i"><use href="#i-home"/></svg></span><span class="tx"><span class="t">Vắng nhà</span><span class="d" id="dAway">--</span></span><span class="v"><span id="vAway">--</span><svg class="i"><use href="#i-chev"/></svg></span></button>
+  <button class="row" type="button" data-sheet="sAway"><span class="ic" id="icAway"><svg class="i"><use href="#i-home"/></svg></span><span class="tx"><span class="t">Tự nhận biết khi ra khỏi nhà</span><span class="d" id="dAway">--</span></span><span class="v"><span id="vAway">--</span><svg class="i"><use href="#i-chev"/></svg></span></button>
   <button class="row" type="button" data-sheet="sMold"><span class="ic" id="icMold"><svg class="i"><use href="#i-fan"/></svg></span><span class="tx"><span class="t">Chống nấm mốc</span><span class="d">Chạy quạt cho khô dàn lạnh trước khi tắt</span></span><span class="v"><span id="vMold">--</span><svg class="i"><use href="#i-chev"/></svg></span></button>
  </div>
 
@@ -378,16 +378,15 @@ input[type=text]{width:100%}
   <div class="lab">Quạt khi hút ẩm</div><div class="pills" id="dFan"></div>
   <p class="msg"></p><div class="ft"><button class="btn" type="button" data-close>Hủy</button><button class="btn pri" type="button" data-save>Lưu</button></div></div>
 
- <div class="sheet" id="sAway" role="dialog" aria-modal="true" aria-labelledby="hAway"><div class="grip"></div><div class="sh"><h2 id="hAway">Vắng nhà</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="i"><use href="#i-close"/></svg></button></div>
-  <div class="fld"><label for="aMan">Đang vắng nhà<span class="d">Bật tay khi đi xa; có tự nhận biết thì ESP32 tự bật / tắt</span></label><label class="sw"><input type="checkbox" id="aMan"><span></span></label></div>
+ <div class="sheet" id="sAway" role="dialog" aria-modal="true" aria-labelledby="hAway"><div class="grip"></div><div class="sh"><h2 id="hAway">Tự nhận biết khi ra khỏi nhà</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="i"><use href="#i-close"/></svg></button></div>
+  <div class="fld"><label for="aOn">Dùng tính năng này<span class="d">ESP32 biết cả nhà đã đi khi điện thoại rời WiFi nhà</span></label><label class="sw"><input type="checkbox" id="aOn"><span></span></label></div>
+  <p class="note" id="aState"></p>
+  <div class="fcol"><label for="aPh">Điện thoại của người trong nhà (IP cố định hoặc địa chỉ MAC WiFi, tối đa 3, cách nhau dấu phẩy)</label><input class="inp" id="aPh" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="192.168.31.50"></div>
+  <div class="lab">Tính là đã ra ngoài sau</div><div class="pills" id="aAfter"></div>
   <div class="lab">Khi không ai ở nhà</div><div class="opts" id="awayOpts"></div>
   <div class="fld" id="aTempF"><label>Nhiệt độ tiết kiệm</label><div class="stp"><button class="sq sm" type="button" id="aT-" aria-label="Giảm"><svg class="i"><use href="#i-minus"/></svg></button><b id="aT">--</b><button class="sq sm" type="button" id="aT+" aria-label="Tăng"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
   <div class="fld" id="aDryF"><label>Hút ẩm khi độ ẩm từ</label><div class="stp"><button class="sq sm" type="button" id="aD-" aria-label="Giảm"><svg class="i"><use href="#i-minus"/></svg></button><b id="aD">--</b><button class="sq sm" type="button" id="aD+" aria-label="Tăng"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
-  <div class="sep"></div>
-  <div class="fld"><label for="aOn">Tự nhận biết ra / về<span class="d">Theo điện thoại trong WiFi nhà: rời WiFi thì tính là đi vắng</span></label><label class="sw"><input type="checkbox" id="aOn"><span></span></label></div>
-  <p class="note" id="aState"></p>
-  <div class="fcol"><label for="aPh">Điện thoại (IP cố định hoặc địa chỉ MAC WiFi, tối đa 3, cách nhau dấu phẩy)</label><input class="inp" id="aPh" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="192.168.31.50"></div>
-  <div class="lab">Tính là đã ra ngoài sau</div><div class="pills" id="aAfter"></div>
+  <p class="note">Có người về là máy lạnh chạy bình thường lại. Trong giờ ngủ, ESP32 không tính là ra ngoài.</p>
   <p class="msg"></p><div class="ft"><button class="btn" type="button" data-close>Hủy</button><button class="btn pri" type="button" data-save>Lưu</button></div></div>
 
  <div class="sheet" id="sMold" role="dialog" aria-modal="true" aria-labelledby="hMold"><div class="grip"></div><div class="sh"><h2 id="hMold">Chống nấm mốc</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="i"><use href="#i-close"/></svg></button></div>
@@ -590,7 +589,7 @@ const dayTxt=w=>w==127?'Hằng ngày':w==62?'T2 – T6':w==65?'T7, CN':DAYS.filt
 const dryLevel=()=>{if(!C.dryByDew)return null;const x=DRY.find(d=>d[3]==C.dewOn&&d[4]==C.dewOff);return x?x[0]:null};
 const fanList=(m,curF)=>{const l=[['','Giữ nguyên']].concat((S.fans[m]||[]).map(f=>[f,FANS[f]||f]));if(curF&&!l.find(x=>x[0]==curF))l.push([curF,FANS[curF]||curF]);return l};
 const ago=x=>x==null||x<0?'chưa thấy':x<90?'vừa thấy':x<3600?'thấy '+Math.round(x/60)+' phút trước':'thấy '+Math.round(x/3600)+' giờ trước';
-function presTxt(p){if(!C.autoAway)return 'Đang tắt: chỉ bật / tắt Vắng nhà bằng tay.';if(!p)return 'Chưa có điện thoại nào, hoặc ESP32 chưa thấy điện thoại.';
+function presTxt(p){if(!C.autoAway)return 'Đang tắt: máy lạnh chạy như bình thường dù có ai ở nhà hay không.';if(!p)return 'Chưa có điện thoại nào, hoặc ESP32 chưa thấy điện thoại.';
  return (p.home==1?'Có người ở nhà':p.home==0?'Không ai ở nhà':'Đang kiểm tra')+' · '+p.phones.map(x=>(x.id||x.ip)+(x.id&&x.ip&&x.id!=x.ip?' ('+x.ip+')':x.id&&!x.ip?' (đang tìm IP)':'')+': '+ago(x.ago)).join(' · ')}
 // ---- Nhật ký ----
 let LOG=[],logV='c';
@@ -614,7 +613,7 @@ const OPEN={
  sDry:()=>{const l=dryLevel()||'cus';const L=DRY.map(d=>[d[0],d[1],d[2]]).concat([['cus','Tùy chỉnh','Tự đặt ngưỡng điểm sương']]);
   const show=v=>{$('dryCus').hidden=v!='cus'};opts($('dryOpts'),L,l,show);show(l);
   stepper('dOn',C.dewOn,15,26,1,v=>v+'°C');stepper('dOff',C.dewOff,12,25,1,v=>v+'°C');pills($('dFan'),fanList('dry',C.dryFan),C.dryFan||'')},
- sAway:()=>{$('aMan').checked=!!C.away;$('aOn').checked=!!C.autoAway;$('aPh').value=C.phones||'';$('aState').textContent=presTxt(S.pres);
+ sAway:()=>{$('aOn').checked=!!C.autoAway;$('aPh').value=C.phones||'';$('aState').textContent=presTxt(S.pres);
   pills($('aAfter'),[[10,'10 phút'],[20,'20 phút'],[30,'30 phút'],[60,'1 giờ']].concat([10,20,30,60].includes(+C.awayAfter)?[]:[[C.awayAfter,C.awayAfter+' phút']]),C.awayAfter||20);
   const vis=x=>{$('aTempF').hidden=x!='2';$('aDryF').hidden=x!='1'};opts($('awayOpts'),AWAY,+C.awayMode,vis);vis(String(C.awayMode));
   stepper('aT',C.awayTemp,24,30,1,v=>v+'°C');stepper('aD',C.awayDryOn,50,95,5,v=>v+'%')},
@@ -636,7 +635,7 @@ const SAVE={
  sDry:s=>{const v=$('dryOpts').dataset.v,fan=$('dFan').dataset.v;
   if(v=='cus'){const a=+$('dOn').dataset.v,b=+$('dOff').dataset.v;if(b>=a){s.querySelector('.msg').textContent='Ngưỡng về làm lạnh phải thấp hơn ngưỡng hút ẩm';return}save({dryByDew:true,dewOn:a,dewOff:b,dryFan:fan},s);return}
   const d=DRY.find(x=>x[0]==v);save({dryByDew:true,dewOn:d[3],dewOff:d[4],dryFan:fan},s)},
- sAway:s=>save({away:$('aMan').checked,awayMode:+$('awayOpts').dataset.v,awayTemp:+$('aT').dataset.v,awayDryOn:+$('aD').dataset.v,
+ sAway:s=>save({...($('aOn').checked?{}:{away:false}),awayMode:+$('awayOpts').dataset.v,awayTemp:+$('aT').dataset.v,awayDryOn:+$('aD').dataset.v,
   autoAway:$('aOn').checked,phones:$('aPh').value.trim(),awayAfter:+$('aAfter').dataset.v},s),
  sMold:s=>save({moldOn:$('mOn').checked,moldMin:+$('mMin').dataset.v},s),
  sPause:s=>save({pauseMin:+$('pMin').dataset.v,gapMin:+$('pGap').dataset.v},s),
@@ -690,8 +689,8 @@ function fill(){if(C.autoOn==null)return;
  $('vCool').textContent=C.coolTemp+'°C';$('dCool').textContent='Giữ '+C.coolTemp+'°C · quạt '+(FANS[C.coolFan]||'giữ nguyên')+' · tăng quạt khi nóng hơn '+deg(C.boostT1).replace('C','')+' / '+deg(C.boostT2).replace('C','');
  const l=dryLevel();$('vDry').textContent=l?DRY.find(d=>d[0]==l)[1]:'Riêng';
  $('dDry').textContent=C.dryByDew?'Hút ẩm khi điểm sương từ '+C.dewOn+'°, về làm lạnh từ '+C.dewOff+'°':'Theo độ ẩm: hút ẩm từ '+C.dryOn+'%, về làm lạnh từ '+C.dryOff+'%';
- const am=+C.awayMode;$('vAway').textContent=C.away?'Đang vắng':C.autoAway?'Có người':'Tắt';$('vAway').parentNode.className='v'+(C.away?' org':'');
- $('dAway').textContent='Khi vắng: '+(am==2?'chạy tiết kiệm '+C.awayTemp+'°C':am==1?'chỉ hút ẩm khi độ ẩm từ '+C.awayDryOn+'%':'tắt máy')+(C.autoAway?' · tự nhận biết ra / về':'');$('icAway').className='ic'+(C.autoAway||C.away?'':' off');
+ const am=+C.awayMode;$('vAway').textContent=!C.autoAway?'Tắt':C.away?'Không ai ở nhà':'Có người';$('vAway').parentNode.className='v'+(C.away?' org':'');
+ $('dAway').textContent='Khi không ai ở nhà: '+(am==2?'chạy tiết kiệm '+C.awayTemp+'°C':am==1?'chỉ hút ẩm khi độ ẩm từ '+C.awayDryOn+'%':'tắt máy');$('icAway').className='ic'+(C.autoAway?'':' off');
  $('vMold').textContent=C.moldOn?C.moldMin+' phút':'Tắt';$('icMold').className='ic'+(C.moldOn?'':' off');
  $('vPause').textContent=C.pauseMin?(C.pauseMin>=60&&C.pauseMin%60==0?C.pauseMin/60+' giờ':C.pauseMin+' phút'):'Không';
  $('vTg').textContent=!C.tgOn?'Chưa cài':TGM[+C.tgMode][1];$('vTg').parentNode.className='v'+(C.tgOn?'':' mut');$('icTg').className='ic'+(C.tgOn&&+C.tgMode?'':' off');
