@@ -12,8 +12,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>
-:root{--bg:#f3f6f8;--card:#fff;--line:#e6ebef;--tx:#14213d;--mut:#5f6b78;--acc:#1fbf9c;--accT:#0e7f67;--onAcc:#fff;--oT:#8b5cf6;--oH:#64748b;--acc2:#e7f8f3;--blue:#2f8cf0;--org:#f27b35;--red:#e5484d;--chip:#f4f6f8;--sh:0 1px 3px rgba(20,33,61,.06),0 6px 20px rgba(20,33,61,.05)}
-@media(prefers-color-scheme:dark){:root{--bg:#15191d;--card:#1f2429;--line:#2d343b;--tx:#e8edf2;--mut:#9aa5b0;--accT:#1fbf9c;--onAcc:#0d2a23;--oT:#b794f6;--oH:#a0aec0;--acc2:#1d3a33;--chip:#272d33;--sh:none}}
+:root{--bg:#f3f6f8;--card:#fff;--line:#e6ebef;--tx:#14213d;--mut:#5f6b78;--acc:#1fbf9c;--accT:#0e7f67;--onAcc:#fff;--acc2:#e7f8f3;--blue:#2f8cf0;--org:#f27b35;--red:#e5484d;--chip:#f4f6f8;--sh:0 1px 3px rgba(20,33,61,.06),0 6px 20px rgba(20,33,61,.05)}
+@media(prefers-color-scheme:dark){:root{--bg:#15191d;--card:#1f2429;--line:#2d343b;--tx:#e8edf2;--mut:#9aa5b0;--accT:#1fbf9c;--onAcc:#0d2a23;--acc2:#1d3a33;--chip:#272d33;--sh:none}}
 *{box-sizing:border-box}
 body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--tx);-webkit-tap-highlight-color:transparent}
 @media(max-width:520px){#htm{display:none}}
@@ -110,13 +110,6 @@ canvas{display:block;width:100%;height:320px}
 .mono{font-family:ui-monospace,Consolas,monospace;font-size:13px;word-break:break-all}
 #toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top));max-width:calc(100% - 32px);text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.2);transform:translateX(-50%) translateY(-20px);background:var(--tx);color:var(--card);padding:11px 18px;border-radius:12px;font-size:14px;transition:.25s;z-index:9}
 #toast{opacity:0;visibility:hidden;pointer-events:none}
-/* Dải thời tiết ngoài trời (đầu trang, mọi tab) */
-.wx{display:flex;align-items:center;flex-wrap:wrap;gap:4px 12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 16px;margin:6px 0 16px;box-shadow:var(--sh);font-size:14px;color:var(--mut)}
-.wx .wi{font-size:22px;line-height:1}.wx b{font-size:16px;color:var(--tx)}
-.wx small{margin-left:auto;font-size:11.5px}
-.wx+nav{margin-top:0}
-.wx.rain{background:#e8f2fe;border-color:#a9cdf7}.wx.rain b{color:#1d6fc4}
-@media(prefers-color-scheme:dark){.wx.rain{background:#1b3350;border-color:#2f5d93}.wx.rain b{color:#8cc2fa}}
 #toast.on{transform:translateX(-50%);opacity:1;visibility:visible}
 /* Bố cục: điện thoại (tab dưới đáy) · máy tính bảng (tab trên, 2 cột) · máy tính (menu trái, 3 cột) */
 nav a svg{width:20px;height:20px;flex:none}
@@ -186,7 +179,6 @@ nav a{display:flex;align-items:center;gap:7px}
 <main>
 <div class="head"><svg width="46" height="46" viewBox="0 0 46 46"><rect x="3" y="16" width="26" height="22" rx="3" fill="#f4a6b8"/><rect x="3" y="27" width="26" height="11" rx="2" fill="#c96b84"/><rect x="31" y="22" width="12" height="16" rx="2" fill="none" stroke="#7b8794" stroke-width="2"/><rect x="9" y="3" width="16" height="9" rx="2" fill="#a7e9d8" stroke="#1fbf9c" stroke-width="1.5"/></svg>
 <div><h1>Phòng ngủ</h1><small><span id="hsrc">--</span></small></div><span class="st"><span class="dot" id="hdot"></span><span id="htx">Đang kết nối…</span></span></div>
-<div class="wx" id="wx" style="display:none"><span class="wi" id="wxI" aria-hidden="true">☁</span><b id="wxT">--</b><span id="wxD"></span><small>Thời tiết: Open-Meteo</small></div>
 <nav id="nav" aria-label="Các tab"><a data-p="ctl" href="#ctl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v9"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/></svg><span>Điều khiển</span></a><a data-p="his" href="#his"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V4M4 20h16M8 16l4-5 3 3 5-6"/></svg><span>Lịch sử</span></a><a data-p="log" href="#log"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><span>Nhật ký</span></a><a data-p="set" href="#set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9L7 7M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg><span>Cài đặt</span></a><a data-p="sys" href="#sys"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg><span>ESP32</span></a></nav>
 
 <section class="pg" id="p-ctl"><div class="grid">
@@ -234,7 +226,7 @@ nav a{display:flex;align-items:center;gap:7px}
  <div class="card"><div class="hd"><h3>📈 Nhiệt độ &amp; độ ẩm</h3><div class="seg" id="rng"><a data-h="6">6 giờ</a><a data-h="24" class="on">24 giờ</a></div></div>
   <div class="in" style="padding-bottom:4px"><div class="tiles" id="hst"></div></div>
   <div class="chartw"><canvas id="cv"></canvas><div class="tip" id="tip"></div></div>
-  <div class="lgd"><span><i style="background:var(--org)"></i>Nhiệt độ</span><span><i style="background:var(--blue)"></i>Độ ẩm</span><span><i style="background:var(--oT)"></i>Nhiệt độ ngoài trời</span><span><i style="background:var(--oH)"></i>Độ ẩm ngoài trời</span><span><i style="background:rgba(47,140,240,.18)"></i>COOL</span><span><i style="background:rgba(31,191,156,.22)"></i>DRY</span><span><i style="background:rgba(123,135,148,.2)"></i>FAN</span></div>
+  <div class="lgd"><span><i style="background:var(--org)"></i>Nhiệt độ</span><span><i style="background:var(--blue)"></i>Độ ẩm</span><span><i style="background:rgba(47,140,240,.18)"></i>COOL</span><span><i style="background:rgba(31,191,156,.22)"></i>DRY</span><span><i style="background:rgba(123,135,148,.2)"></i>FAN</span></div>
  </div>
  <small style="color:var(--mut)">Lịch sử và nhật ký được lưu vào flash của ESP32, không mất khi mất điện.</small>
 </section>
@@ -390,9 +382,6 @@ async function cmd(o){busy++;toast('Đang gửi lệnh…',0);
  busy--;st();lg()}
 async function quick(k,v){C[k]=v;const r=await post('/api/settings',{[k]:v});toast(r.ok?'Đã lưu':'Lỗi lưu');C=await r.json().catch(()=>C);fillSet();st()}
 const f1=v=>v==null?'--':(+v).toFixed(1),f0=v=>v==null?'--':Math.round(v);
-// Mã thời tiết WMO (Open-Meteo)
-const wxIco=c=>c==0?'☀':c<=2?'⛅':c==3?'☁':c==45||c==48?'🌫':c>=95?'⛈':c>=51?'🌧':'☁';
-const wxTxt=c=>c==0?'Trời quang':c<=2?'Ít mây':c==3?'Nhiều mây':c==45||c==48?'Sương mù':c>=51&&c<=57?'Mưa phùn':c>=61&&c<=67?'Mưa':c>=80&&c<=82?'Mưa rào':c>=95?'Dông':'--';
 // Vòng nhiệt độ chia nấc: mỗi độ một nấc, từ T_MIN đến T_MAX. Vòng tròn bán kính 112 (chu vi DC), cung 270 độ, khe giữa các nấc DG.
 const DN=T_MAX-T_MIN+1,DC=703.72,DG=6,DS=DC*.75/DN,DSG=(DS-DG).toFixed(2);
 function dialSegs(n){let p='';for(let i=1;i<n;i++)p+=DSG+' '+DG+' ';return p+DSG+' '+(DC-n*DS+DG).toFixed(2)}
@@ -416,10 +405,6 @@ async function st(){let s;try{s=S=await j('/api/status')}catch(e){$('hdot').clas
  $('hsrc').textContent=(s.acOk?(s.acOn?'Đang chạy · ':'Đang tắt · '):'')+'Nguồn đo '+s.src;
  $('vt').innerHTML=f1(s.t)+'<i>°C</i>';$('vh').innerHTML=f0(s.rh)+'<i>%</i>';$('vf').innerHTML=f1(s.feels)+'<i>°C</i>';
  $('vd').innerHTML=f1(s.dew)+'<i>°C</i>';$('vb').innerHTML=(s.batt>=0?s.batt:'--')+'<i>%</i>';$('vday').textContent=today();
- const o=s.out;$('wx').style.display=o?'':'none';
- if(o){const rain=(o.code>=51&&o.code<=99)||o.rain>0;$('wx').classList.toggle('rain',rain);$('wxI').textContent=wxIco(o.code);
-  $('wxT').textContent='Ngoài trời '+f1(o.t)+'°C · '+f0(o.rh)+'% · '+wxTxt(o.code);
-  $('wxD').textContent='Hôm nay '+f0(o.tmin)+' – '+f0(o.tmax)+'°C · Phú Định'+(o.ago>3600?' · cập nhật '+Math.round(o.ago/60)+' phút trước':'')}
  $('tnow').textContent=f1(s.t);setRoom(s.t);if($('presSt'))$('presSt').textContent=presTxt(s.pres);
  const on=s.acOn,m=s.acMode,noT=m=='fan'||!s.acOk;
  $('sum').textContent=s.acOk?(on?(MODES[m]||m)+(noT?'':' · '+s.acTemp+'°C')+' · quạt '+(FANS[s.acFan]||s.acFan):'Đang tắt'):'Chưa rõ trạng thái';
@@ -507,7 +492,7 @@ function draw(hx){const cv=$('cv'),r=cv.getBoundingClientRect(),dp=devicePixelRa
  const g=cv.getContext('2d');g.scale(dp,dp);const W=r.width,Hh=r.height,L=40,R=40,T=12,B=26;g.font='12px system-ui';
  const now=Date.now()/1000,x0=now-hrs*3600,P=(H?H.pts:[]).filter(p=>p[0]>=x0-H.step);
  if(P.length<2){g.fillStyle=css('--mut');g.textAlign='center';g.fillText('Chưa đủ dữ liệu · mỗi 5 phút ghi 1 điểm',W/2,Hh/2);$('hst').innerHTML='';return}
- const X=ts=>L+(ts-x0)/(hrs*3600)*(W-L-R);const ov=P.filter(p=>p[4]!=null);let tn=Math.min(...P.map(p=>p[1]),...ov.map(p=>p[4])),tx=Math.max(...P.map(p=>p[1]),...ov.map(p=>p[4]));tn=Math.floor(tn-.5);tx=Math.ceil(tx+.5);
+ const X=ts=>L+(ts-x0)/(hrs*3600)*(W-L-R);let tn=Math.min(...P.map(p=>p[1])),tx=Math.max(...P.map(p=>p[1]));tn=Math.floor(tn-.5);tx=Math.ceil(tx+.5);
  const Yt=v=>T+(tx-v)/(tx-tn)*(Hh-T-B),Yh=v=>T+(100-v)/100*(Hh-T-B),bg=['rgba(47,140,240,.15)','rgba(31,191,156,.2)','rgba(123,135,148,.18)','rgba(123,135,148,.1)'];
  let s0=null;P.forEach((p,i)=>{const n=P[i+1],k=p[3]&1?(p[3]>>1)&3:-1,kn=n&&n[3]&1?(n[3]>>1)&3:-2;if(k<0)return;if(s0==null)s0=p[0];
   if(!n||kn!=k||n[0]-p[0]>H.step*3){const a=Math.max(L,X(s0));g.fillStyle=bg[k];g.fillRect(a,T,Math.max(2,X(n&&n[0]-p[0]<=H.step*3?n[0]:p[0]+H.step)-a),Hh-T-B);s0=null}});
@@ -517,11 +502,10 @@ function draw(hx){const cv=$('cv'),r=cv.getBoundingClientRect(),dp=devicePixelRa
  const line=(f,c,w)=>{g.strokeStyle=c;g.lineWidth=w||2.2;g.lineJoin='round';g.beginPath();let pv=0;
   P.forEach(p=>{const y=f(p);if(y==null){pv=0;return}const x=X(p[0]);if(pv&&p[0]-pv<H.step*3)g.lineTo(x,y);else g.moveTo(x,y);pv=p[0]});g.stroke()};
  line(p=>Yt(p[1]),css('--org'));line(p=>Yh(p[2]),css('--blue'));
- if(ov.length){line(p=>p[4]==null?null:Yt(p[4]),css('--oT'),1.8);line(p=>p[5]==null?null:Yh(p[5]),css('--oH'),1.8)}
  if(hx!=null){let b=P[0];P.forEach(p=>{if(Math.abs(X(p[0])-hx)<Math.abs(X(b[0])-hx))b=p});const x=X(b[0]);
   g.strokeStyle=css('--mut');g.setLineDash([3,3]);g.beginPath();g.moveTo(x,T);g.lineTo(x,Hh-B);g.stroke();g.setLineDash([]);
-  [[Yt(b[1]),css('--org')],[Yh(b[2]),css('--blue')]].concat(b[4]!=null?[[Yt(b[4]),css('--oT')],[Yh(b[5]),css('--oH')]]:[]).forEach(([y,c])=>{g.fillStyle=c;g.beginPath();g.arc(x,y,4,0,7);g.fill()});
-  const tp=$('tip');tp.style.display='block';tp.innerHTML=tsS(b[0])+' · 🌡 '+b[1]+'° · 💧 '+b[2]+'%'+(b[3]&1?' · '+(['COOL','DRY','FAN','BẬT'][(b[3]>>1)&3]):' · tắt')+(b[4]!=null?' · ngoài '+b[4]+'° '+b[5]+'%':'');
+  [[Yt(b[1]),css('--org')],[Yh(b[2]),css('--blue')]].forEach(([y,c])=>{g.fillStyle=c;g.beginPath();g.arc(x,y,4,0,7);g.fill()});
+  const tp=$('tip');tp.style.display='block';tp.innerHTML=tsS(b[0])+' · 🌡 '+b[1]+'° · 💧 '+b[2]+'%'+(b[3]&1?' · '+(['COOL','DRY','FAN','BẬT'][(b[3]>>1)&3]):' · tắt');
   tp.style.left=Math.min(Math.max(0,x-tp.offsetWidth/2+12),W-tp.offsetWidth+12)+'px';tp.style.top='0px'}else $('tip').style.display='none';
  const on=P.filter(p=>p[3]&1).length*H.step/3600,mn=a=>Math.min(...a),mx=a=>Math.max(...a),tt=P.map(p=>p[1]),hh=P.map(p=>p[2]);
  $('hst').innerHTML='<div class="tile"><small>🌡 Nhiệt độ</small><div>'+mn(tt)+'–'+mx(tt)+'<i>°C</i></div></div><div class="tile"><small>💧 Độ ẩm</small><div>'+mn(hh)+'–'+mx(hh)+'<i>%</i></div></div><div class="tile"><small>⏱ Máy chạy</small><div>'+on.toFixed(1)+'<i>giờ</i></div></div>'}
