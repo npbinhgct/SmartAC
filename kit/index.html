@@ -56,6 +56,7 @@ a.note{text-decoration:none;cursor:pointer;align-items:center}
 .cl{display:flex;align-items:flex-end;justify-content:space-between}
 .cl small{font-size:13px;color:var(--mut);font-weight:500}
 .cl .big{font-size:52px;font-weight:700;line-height:1;letter-spacing:-1.5px;font-variant-numeric:tabular-nums}
+.more{margin:-4px 0 0;font-size:13px;color:var(--mut)}
 .cl .rh{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 .cl .rh b{display:flex;align-items:center;gap:6px;font-size:16px}
 .cl .rh b svg.i{width:18px;height:18px;color:var(--blue)}
@@ -249,6 +250,7 @@ input[type=text]{width:100%}
    <div><small id="vSrc">Trong phòng</small><div class="big" id="vT">--°</div></div>
    <div class="rh"><b><svg class="i"><use href="#i-drop"/></svg><span id="vH">--%</span></b><span class="tag" id="vHtag">--</span></div>
   </div>
+  <p class="more" id="vMore">--</p>
  </div>
  <div class="card">
   <div class="acH">
@@ -680,7 +682,7 @@ async function st(){let s;try{s=S=await j('/api/status');stMiss=0}catch(e){if(++
  $('dot').className='dot'+(MQ&&mqOn===false?' off':'');const where=MQ?(mqOn===false?'Kit mất kết nối':'Qua Internet'):'Trong mạng nhà';$('connTx').textContent=s.time&&s.time!='--:--'?where+' · '+s.time:where;
  if(s.room){$('roomName').textContent=s.room;document.title=s.room+' · SmartAC'}
  $('bSafe').hidden=!s.safeMode;$('bIr').hidden=!!s.irLearned;
- $('vSrc').textContent=s.src&&s.src!='SHT40'&&s.src!='không có'?'Số đo từ '+s.src:'Trong phòng';$('vT').textContent=f1(s.t)+'°';$('vH').textContent=s.rh==null?'--%':Math.round(s.rh)+'%';
+ $('vSrc').textContent=s.src&&s.src!='SHT40'&&s.src!='không có'?'Số đo từ '+s.src:'Trong phòng';$('vT').textContent=f1(s.t)+'°';$('vMore').textContent=s.feels==null?'--':'Cảm giác như '+f1(s.feels)+'° · điểm sương '+f1(s.dew)+'°';$('vH').textContent=s.rh==null?'--%':Math.round(s.rh)+'%';
  const tg=rhTag(s.rh);$('vHtag').textContent=tg[0];$('vHtag').className='tag'+(tg[1]?' '+tg[1]:'');
  const on=s.acOn,m=s.acMode,noT=!on||m=='fan';
  $('acSt').innerHTML=ico(on?MICON[m]||'snow':'power')+'<span>'+(on?(MODE_EN[m]||'On'):'Off')+'</span>';
