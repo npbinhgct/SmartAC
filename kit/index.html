@@ -674,7 +674,8 @@ const SAVE={
  sSens:s=>save({tOff:+$('sT').dataset.v,rhOff:+$('sH').dataset.v},s)};
 // ---- Trạng thái (mỗi 5 giây) ----
 function rhTag(h){return h==null||isNaN(h)?['--','']:h<40?['Khô','blue']:h<=60?['Dễ chịu','']:h<=70?['Hơi ẩm','org']:['Rất ẩm','org']}
-async function st(){let s;try{s=S=await j('/api/status')}catch(e){$('dot').className='dot off';
+let stMiss=0;   // (25/11/2026) 2 lần liên tiếp không trả lời mới báo mất kết nối (kit bận phát IR thì trễ 1 lượt)
+async function st(){let s;try{s=S=await j('/api/status');stMiss=0}catch(e){if(++stMiss<2)return;$('dot').className='dot off';
  $('connTx').textContent=!MQ?'Mất kết nối kit':(mqc&&mqc.connected?(mqOn===false?'Kit mất kết nối Internet':'Kit không trả lời'):'Chưa vào được máy chủ');return}
  $('dot').className='dot'+(MQ&&mqOn===false?' off':'');const where=MQ?(mqOn===false?'Kit mất kết nối':'Qua Internet'):'Trong mạng nhà';$('connTx').textContent=s.time&&s.time!='--:--'?where+' · '+s.time:where;
  if(s.room){$('roomName').textContent=s.room;document.title=s.room+' · SmartAC'}
