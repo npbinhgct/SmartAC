@@ -370,13 +370,21 @@ input[type=text]{width:100%}
   <div class="fld"><label>Nhiệt độ mong muốn</label><div class="stp"><button class="sq sm" type="button" id="cT-" aria-label="Giảm"><svg class="i"><use href="#i-minus"/></svg></button><b id="cT">--</b><button class="sq sm" type="button" id="cT+" aria-label="Tăng"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
   <div class="sep"></div>
   <div class="lab">Quạt thường dùng</div><div class="pills" id="cFan"></div>
-  <p class="note plain" id="cBoost"><svg class="i"><use href="#i-info"/></svg><span>--</span></p>
+  <div class="sep"></div>
+  <div class="fld"><label>Quạt Vừa khi phòng nóng hơn<span class="d">So với nhiệt độ mong muốn</span></label><div class="stp"><button class="sq sm" type="button" id="b1-" aria-label="Giảm"><svg class="i"><use href="#i-minus"/></svg></button><b id="b1">--</b><button class="sq sm" type="button" id="b1+" aria-label="Tăng"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
+  <div class="fld"><label>Quạt Cao, hạ 1°C khi nóng hơn<span class="d">Tối đa 30 phút rồi về lại</span></label><div class="stp"><button class="sq sm" type="button" id="b2-" aria-label="Giảm"><svg class="i"><use href="#i-minus"/></svg></button><b id="b2">--</b><button class="sq sm" type="button" id="b2+" aria-label="Tăng"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
+  <p class="note plain"><svg class="i"><use href="#i-info"/></svg><span>Trong giờ ngủ máy luôn chạy quạt êm.</span></p>
   <p class="msg"></p><div class="ft"><button class="btn" type="button" data-close>Hủy</button><button class="btn pri" type="button" data-save>Lưu</button></div></div>
 
  <div class="sheet" id="sDry" role="dialog" aria-modal="true" aria-labelledby="hDry"><div class="grip"></div><div class="sh"><h2 id="hDry">Hút ẩm thông minh</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="i"><use href="#i-close"/></svg></button></div>
   <p class="d">Chọn mức khô của phòng. Máy đo nhiệt độ và độ ẩm, tự quyết định khi nào hút ẩm.</p>
   <div class="opts" id="dryOpts"></div>
-  <p class="note plain"><svg class="i"><use href="#i-info"/></svg><span>Đã hút ẩm thì chạy tối thiểu 30 phút rồi mới đổi chế độ, để máy kịp làm khô.</span></p>
+  <div id="dryCus">
+   <div class="fld"><label>Hút ẩm khi điểm sương từ<span class="d">21° là oi, 24° là rất oi</span></label><div class="stp"><button class="sq sm" type="button" id="dwOn-" aria-label="Giảm"><svg class="i"><use href="#i-minus"/></svg></button><b id="dwOn">--</b><button class="sq sm" type="button" id="dwOn+" aria-label="Tăng"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
+   <div class="fld"><label>Về làm lạnh khi điểm sương từ</label><div class="stp"><button class="sq sm" type="button" id="dwOff-" aria-label="Giảm"><svg class="i"><use href="#i-minus"/></svg></button><b id="dwOff">--</b><button class="sq sm" type="button" id="dwOff+" aria-label="Tăng"><svg class="i"><use href="#i-plus"/></svg></button></div></div>
+  </div>
+  <div class="lab">Quạt khi hút ẩm</div><div class="pills" id="dFan"></div>
+  <p class="note plain"><svg class="i"><use href="#i-info"/></svg><span>Đã hút ẩm thì chạy tối thiểu 30 phút rồi mới đổi chế độ. Có người ở nhà: hút ẩm liên tục tối đa 2 giờ, rồi làm lạnh 30 phút mới hút ẩm lại.</span></p>
   <p class="msg"></p><div class="ft"><button class="btn" type="button" data-close>Hủy</button><button class="btn pri" type="button" data-save>Lưu</button></div></div>
 
  <div class="sheet" id="sAway" role="dialog" aria-modal="true" aria-labelledby="hAway"><div class="grip"></div><div class="sh"><h2 id="hAway">Tự nhận biết khi ra khỏi nhà</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="i"><use href="#i-close"/></svg></button></div>
@@ -468,6 +476,8 @@ input[type=text]{width:100%}
 <script>
 const $=i=>document.getElementById(i),T_MIN=26,T_MAX=30;
 const MODES={cool:'Làm lạnh',dry:'Hút ẩm',fan:'Quạt'},MODE_EN={cool:'Cool',dry:'Dry',fan:'Fan'},MICON={cool:'snow',dry:'drop',fan:'fan'};
+const fanList=(m,curF)=>{const l=[['','Giữ nguyên']].concat((S.fans[m]||[]).map(f=>[f,FANS[f]||f]));if(curF&&!l.find(x=>x[0]==curF))l.push([curF,FANS[curF]||curF]);return l};
+const deg=v=>String(v).replace('.',',')+'°C';
 const FANS={quiet:'Êm',low:'Thấp',medium_low:'Vừa-thấp',medium:'Vừa',medium_high:'Vừa-cao',high:'Cao',strong:'Mạnh',auto:'Tự động'};
 // Hút ẩm: 3 mức thay cho số điểm sương (dewOn = bắt đầu hút, dewOff = về làm lạnh)
 const DRY=[['dry','Khô thoáng','Hút sớm, phòng luôn khô. Tốn điện hơn',19,17],['bal','Cân bằng','Khuyên dùng cho phòng ngủ',21,19],['eco','Tiết kiệm','Chỉ hút khi rất ẩm',23,21]];
@@ -626,8 +636,13 @@ const OPEN={
  sFan:()=>opts($('fanOpts'),(S.fans[S.acMode]||[]).map(f=>[f,FANS[f]||f]),S.acFan,v=>{closeSheet();cmd({on:true,fan:v})}),
  sSwing:()=>opts($('swOpts'),[['on','Lên xuống','Gió đảo đều cả phòng'],['off','Cố định','Giữ cánh gió một chỗ']],S.swingOn?'on':'off',v=>{closeSheet();cmd({swing:v})}),
  sRooms:()=>opts($('roomOpts'),ROOMS.map(r=>[r.ip,r.name||r.ip,r.self?'Đang xem':'']),(ROOMS.find(r=>r.self)||{}).ip,ip=>{const r=ROOMS.find(x=>x.ip==ip);if(r&&!r.self)location.href='http://'+ip+'/'+location.hash;else closeSheet()}),
- sCool:()=>{stepper('cT',C.coolTemp,16,30,1,v=>v+'°C');const fl=(S.fans.cool||[]).map(f=>[f,FANS[f]||f]);if(C.coolFan&&!fl.find(x=>x[0]==C.coolFan))fl.push([C.coolFan,FANS[C.coolFan]||C.coolFan]);pills($('cFan'),fl,C.coolFan)},
- sDry:()=>{const l=dryLevel();const L=DRY.map(d=>[d[0],d[1],d[2]]);if(!l)L.push(['keep','Giữ cài đặt riêng',C.dryByDew?'Điểm sương '+C.dewOn+'° / '+C.dewOff+'°':'Theo độ ẩm '+C.dryOn+'% / '+C.dryOff+'%']);opts($('dryOpts'),L,l||'keep',v=>$('dryOpts').dataset.v=v);$('dryOpts').dataset.v=l||'keep'},
+ sCool:()=>{stepper('cT',C.coolTemp,16,30,1,v=>v+'°C');pills($('cFan'),fanList('cool',C.coolFan),C.coolFan||'');
+  stepper('b1',C.boostT1,.5,3,.1,deg);stepper('b2',C.boostT2,1,5,.1,deg)},
+
+ sDry:()=>{const l=dryLevel()||'cus';const L=DRY.map(d=>[d[0],d[1],d[2]]).concat([['cus','Tùy chỉnh','Tự đặt ngưỡng điểm sương']]);
+  const show=v=>{$('dryOpts').dataset.v=v;$('dryCus').hidden=v!='cus'};opts($('dryOpts'),L,l,show);show(l);
+  stepper('dwOn',C.dewOn,15,26,1,v=>v+'°C');stepper('dwOff',C.dewOff,12,25,1,v=>v+'°C');pills($('dFan'),fanList('dry',C.dryFan),C.dryFan||'')},
+
  sAway:()=>{$('aOn').checked=!!C.autoAway;pres();pills($('aAfter'),[[10,'10 phút'],[20,'20 phút'],[30,'30 phút'],[60,'1 giờ']],C.awayAfter||20);const v=+C.awayMode;opts($('awayOpts'),AWAY,v,x=>{$('awayOpts').dataset.v=x;$('aTempF').hidden=x!='2'});$('awayOpts').dataset.v=v;$('aTempF').hidden=v!=2;stepper('aT',C.awayTemp,24,30,1,v=>v+'°C')},
  sMold:()=>{$('mOn').checked=!!C.moldOn;const L=[5,10,15,20,30].map(m=>[m,m+' phút']);if(!L.find(x=>x[0]==C.moldMin))L.push([C.moldMin,C.moldMin+' phút']);pills($('mMin'),L,C.moldMin)},
  sPause:()=>{const L=[[0,'Không tạm dừng'],[15,'15 phút'],[30,'30 phút'],[60,'1 giờ'],[120,'2 giờ']];if(!L.find(x=>x[0]==C.pauseMin))L.push([C.pauseMin,C.pauseMin+' phút']);pills($('pMin'),L,C.pauseMin)},
@@ -663,8 +678,11 @@ const SAVE={
   if(!(p>=500&&p<=20000)){s.querySelector('.msg').textContent='Giá điện từ 500 đến 20.000 đ/kWh';return}
   saveMeter({acW:a,price:p,fanW:f>=5&&f<=300?f:40},s)},
  sFilter:s=>saveMeter({filterH:+$('fH').dataset.v},s),
- sCool:s=>save({coolTemp:+$('cT').dataset.v,coolFan:$('cFan').dataset.v},s),
- sDry:s=>{const v=$('dryOpts').dataset.v;if(v=='keep'){closeSheet();return}const d=DRY.find(x=>x[0]==v);save({dryByDew:true,dewOn:d[3],dewOff:d[4]},s)},
+ sCool:s=>{const b1=+$('b1').dataset.v,b2=+$('b2').dataset.v;if(b2<=b1){s.querySelector('.msg').textContent='Mức quạt Cao phải lớn hơn mức quạt Vừa';return}
+  save({coolTemp:+$('cT').dataset.v,coolFan:$('cFan').dataset.v,boostT1:b1,boostT2:b2},s)},
+ sDry:s=>{const v=$('dryOpts').dataset.v,fan=$('dFan').dataset.v;
+  if(v=='cus'){const a=+$('dwOn').dataset.v,b=+$('dwOff').dataset.v;if(b>=a){s.querySelector('.msg').textContent='Ngưỡng về làm lạnh phải thấp hơn ngưỡng hút ẩm';return}save({dryByDew:true,dewOn:a,dewOff:b,dryFan:fan},s);return}
+  const d=DRY.find(x=>x[0]==v);save({dryByDew:true,dewOn:d[3],dewOff:d[4],dryFan:fan},s)},
  sAway:async s=>{try{const r=await post('/api/presence',{on:$('aOn').checked,after:+$('aAfter').dataset.v});if(!r.ok)throw 0;P=await r.json()}catch(e){s.querySelector('.msg').textContent='Chưa lưu được: mất kết nối';return}
  save({awayMode:+$('awayOpts').dataset.v,awayTemp:+$('aT').dataset.v},s)},
  sMold:s=>save({moldOn:$('mOn').checked,moldMin:+$('mMin').dataset.v},s),
@@ -715,7 +733,7 @@ $('irTest').onclick=async()=>{toast('Đang phát…',0);try{const r=await post('
 // ---- Cài đặt → các dòng tóm tắt ----
 function fill(){if(C.autoOn==null)return;
  $('qAuto').checked=C.autoOn;$('qSleep').checked=C.sleepOn;
- $('vCool').textContent=C.coolTemp+'°C';$('dCool').textContent='Giữ '+C.coolTemp+'°C · quạt '+(FANS[C.coolFan]||'giữ nguyên')+' · tăng quạt khi nóng';
+ $('vCool').textContent=C.coolTemp+'°C';$('dCool').textContent='Giữ '+C.coolTemp+'°C · quạt '+(FANS[C.coolFan]||'giữ nguyên')+' · tăng quạt khi nóng hơn '+deg(C.boostT1).replace('C','')+' / '+deg(C.boostT2).replace('C','');
  const l=dryLevel();$('vDry').textContent=l?DRY.find(d=>d[0]==l)[1]:'Riêng';
  const am=+C.awayMode;$('vAway').textContent=!C.autoAway?'Tắt':C.away?'Không ai ở nhà':'Có người';$('vAway').parentNode.className='v'+(C.autoAway&&C.away?' org':'');
  $('dAway').textContent='Khi không ai ở nhà: '+(am==2?'chạy tiết kiệm '+C.awayTemp+'°C':am==1?'chỉ hút ẩm khi quá ẩm':'tắt máy');$('icAway').className='ic'+(C.autoAway?'':' off');
@@ -725,7 +743,7 @@ function fill(){if(C.autoOn==null)return;
  $('tmrOff').hidden=!!C.autoOn;$('todayTx').textContent='Hôm nay: '+today();
  $('vSs').textContent=C.sleepStart;$('vSe').textContent=C.sleepEnd;
  $('vRoom').textContent=C.room||'--';$('dSens').textContent='Nhiệt độ '+sgn(C.tOff,'°C')+' · Độ ẩm '+sgn(C.rhOff,'%');
- const s=$('cBoost').querySelector('span');s.textContent='Phòng nóng hơn mức mong muốn '+String(C.boostT1).replace('.',',')+'°C thì quạt Vừa; hơn '+String(C.boostT2).replace('.',',')+'°C thì quạt Cao và hạ nhiệt độ đặt 1°C, tối đa 30 phút rồi về lại nhiệt độ ban đầu.'}
+}
 function today(){const d=new Date().getDay(),on=C.onWeek>>d&1,off=C.offWeek>>d&1;
  const a=[off?[C.winEnd,'tắt '+C.winEnd]:null,on?[C.winStart,'bật '+C.winStart]:null].filter(Boolean).sort().map(x=>x[1]);
  return a.length?a.join(', ')+(off?'':' (sáng không tắt)'):'không bật, không tắt'}
