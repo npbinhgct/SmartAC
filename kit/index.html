@@ -241,7 +241,7 @@ input[type=text]{width:100%}
 </header>
 
 <p class="note red" id="bSafe" hidden><svg class="i"><use href="#i-warn"/></svg><span>Kit đã tự khởi động lại nhiều lần nên đang ở chế độ an toàn, tạm chưa điều khiển máy lạnh.</span><button class="btn sm" id="bNormal" type="button">Chạy lại</button></p>
-<a class="note org" id="bIr" href="#set" hidden><svg class="i"><use href="#i-remote"/></svg><span style="flex:1">Kit chưa biết máy lạnh của bạn: chĩa remote về phía kit bấm 1 nút, hoặc vào Cài đặt → Remote máy lạnh để chọn hãng.</span><svg class="i"><use href="#i-chev"/></svg></a>
+<a class="note org" id="bIr" href="#set" hidden><svg class="i"><use href="#i-remote"/></svg><span style="flex:1">Kit chưa biết máy lạnh của bạn: vào Cài đặt → Remote máy lạnh, bấm Học remote rồi bấm remote gốc 1 lần (hoặc chọn hãng).</span><svg class="i"><use href="#i-chev"/></svg></a>
 
 <!-- ===== 1. Điều khiển ===== -->
 <section class="pg" id="p-ctl">
@@ -457,7 +457,9 @@ input[type=text]{width:100%}
  <div class="sheet" id="sIr" role="dialog" aria-modal="true" aria-labelledby="hIr"><div class="grip"></div><div class="sh"><h2 id="hIr">Remote máy lạnh</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="i"><use href="#i-close"/></svg></button></div>
   <div class="kv"><span>Loại máy đã học</span><span id="irP">--</span></div>
   <div class="kv"><span>Bấm remote gốc gần nhất</span><span id="irL">--</span></div>
-  <p class="d">Kit có mắt thu: chĩa remote máy lạnh về phía kit, bấm 1 nút bất kỳ, kit tự nhận ra loại máy. Hoặc chọn hãng bên dưới rồi bấm Phát thử: máy lạnh kêu bíp là đúng.</p>
+  <p class="d">Bấm <b>Học remote</b>, rồi trong 60 giây chĩa remote máy lạnh về phía kit, bấm 1 nút bất kỳ: kit nhận ra loại máy. Ngoài lúc học, kit bỏ qua remote máy lạnh loại khác. Hoặc chọn hãng bên dưới rồi bấm Phát thử: máy lạnh kêu bíp là đúng.</p>
+  <button class="btn pri" type="button" id="irLearn" style="width:100%">Học remote</button>
+  <p class="note" id="irLearnSt" hidden></p>
   <div class="lab">Chọn hãng máy lạnh</div><div class="opts" id="irBrands"></div>
   <div class="ft"><button class="btn ghost" type="button" id="irTest">Phát thử</button><button class="btn" type="button" data-close>Đóng</button></div></div>
 
@@ -729,6 +731,16 @@ $('resume').onclick=async()=>{await post('/api/resume',{});toast('Đã chạy t�
 $('bNormal').onclick=async()=>{toast('Đang khởi động lại kit…',6000);try{await post('/api/normal',{})}catch(e){}setTimeout(()=>location.reload(),8000)};
 $('qAuto').onchange=e=>save({autoOn:e.target.checked});
 $('qSleep').onchange=e=>save({sleepOn:e.target.checked});
+// (27/11/2026) Học remote: kit chỉ nhận loại remote mới trong 60 giây sau khi bấm nút này
+let irLT=0;
+$('irLearn').onclick=async()=>{const b=$('irLearn'),m=$('irLearnSt'),nm=p=>(BRANDS.find(x=>x[0]==p)||[p,p])[1];
+ try{const r=await post('/api/irlearn',{});if(!r.ok)throw 0}catch(e){toast('Không kết nối được kit',3000);return}
+ b.disabled=true;m.hidden=false;m.textContent='Đang chờ: chĩa remote máy lạnh vào kit, bấm 1 nút bất kỳ (còn 60 giây)';clearInterval(irLT);
+ irLT=setInterval(async()=>{let s;try{s=await j('/api/irlearn')}catch(e){return}
+  if(s.on){m.textContent='Đang chờ: chĩa remote máy lạnh vào kit, bấm 1 nút bất kỳ (còn '+s.left+' giây)';return}
+  clearInterval(irLT);b.disabled=false;
+  m.textContent=s.got?'Đã học: '+nm(s.proto)+'. Bấm Phát thử để kiểm tra.':'Hết 60 giây mà chưa nhận được remote máy lạnh. Đứng gần kit hơn rồi bấm Học remote lại.';
+  if(s.got){$('irP').textContent=nm(s.proto);$('irTest').disabled=false;toast('Đã học remote: '+nm(s.proto),3000);sys();st()}},1500)};
 $('irTest').onclick=async()=>{toast('Đang phát…',0);try{const r=await post('/api/irtest',{});toast(await r.text(),r.ok?4000:6000)}catch(e){toast('Không kết nối được kit',4000)}};
 // ---- Cài đặt → các dòng tóm tắt ----
 function fill(){if(C.autoOn==null)return;
