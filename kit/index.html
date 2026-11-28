@@ -175,7 +175,7 @@ input[type=text]{width:100%}
 .kv{display:flex;justify-content:space-between;gap:12px;font-size:14px;padding:8px 0;border-top:1px solid var(--line)}
 .kv span:first-child{color:var(--mut)}.kv span:last-child{text-align:right;font-weight:600}
 .msg{font-size:13px;color:var(--red);min-height:1em;margin:0}
-.toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#14213D;color:#fff;padding:12px 18px;border-radius:14px;font-size:14px;opacity:0;pointer-events:none;transition:.2s;z-index:20;max-width:90vw;text-align:center}
+.toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top));transform:translateX(-50%) translateY(-20px);background:#14213D;color:#fff;padding:12px 18px;border-radius:14px;font-size:14px;opacity:0;pointer-events:none;transition:.2s;z-index:20;max-width:90vw;text-align:center}
 .toast.on{opacity:1;transform:translateX(-50%)}
 /* Theo dõi: tiền điện + vệ sinh */
 .money{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
