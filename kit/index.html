@@ -769,7 +769,7 @@ function tech(){if(!SY){$('techKv').innerHTML='<p class="d">Không đọc đư�
  const c=s.crash;const r=[['Trạng thái',s.safeMode?'Chế độ an toàn':s.tempWarm?'Chip nóng, đang hạ tốc độ':'Bình thường'],['Nhiệt độ chip',s.chipTemp!=null?f1(s.chipTemp)+'°C':'--'],
   ['RAM trống / thấp nhất',kb(s.heapFree)+' / '+kb(s.heapMin)],['Đã chạy',dur(s.uptime)],['Lần khởi động gần nhất do',s.resetReason],['Số lần treo / lỗi',s.crashes],
   ['Cảm biến SHT40',s.shtOk+' lần đọc · '+s.shtErr+' lỗi'],['Thời gian phát IR',s.irUs?(s.irUs/1000).toFixed(1)+' ms (nhanh nhất '+(s.irUsMin/1000).toFixed(1)+', chậm nhất '+(s.irUsMax/1000).toFixed(1)+')':'chưa phát'],['Giờ lấy từ',{ntp:'Internet',phone:'điện thoại',none:'chưa có'}[s.timeSrc]||'--'],['WiFi',(s.ssid||'--')+' · kênh '+s.channel+' · '+s.rssi+' dBm'],
-  ['MAC',s.mac],['Chip',s.chip+' · '+s.cpuMHz+' MHz'],['Bản firmware',s.build]];
+  ['MAC',s.mac],['Chip',s.chip+' · '+s.cpuMHz+' MHz'],['Bản firmware',(s.fw?s.fw+' · ':'')+s.build]];
  if(c)r.push(['Sự cố gần nhất',c.reason+' lúc '+c.step+(c.task?' · '+c.task:'')+(c.pc?' · PC '+c.pc:'')]);
  $('techKv').innerHTML=r.map(x=>'<div class="kv"><span>'+esc(x[0])+'</span><span>'+esc(x[1])+'</span></div>').join('');$('crashClr').hidden=!c}
 $('crashClr').onclick=async()=>{await post('/api/crashclear',{});await sys();tech()};
