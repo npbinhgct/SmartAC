@@ -366,7 +366,7 @@ input[type=text]{width:100%}
  </div>
  <h3 class="gl">Bộ điều khiển</h3>
  <div class="card list">
-  <div class="row static"><span class="ic"><svg class="i"><use href="#i-therm"/></svg></span><span class="tx"><span class="t">Nhiệt kế CGDK2</span><span class="d" id="dSens">--</span></span></div>
+  <div class="row static"><span class="ic"><svg class="i"><use href="#i-therm"/></svg></span><span class="tx"><span class="t" id="tSens">Nhiệt kế CGDK2</span><span class="d" id="dSens">--</span></span></div>
   <div class="row static"><span class="ic"><svg class="i"><use href="#i-wifi"/></svg></span><span class="tx"><span class="t">WiFi</span><span class="d" id="dWifi">--</span></span></div>
   <div class="row static" id="rAddr"><span class="tx"><span class="t">Địa chỉ trong nhà</span><span class="d" id="dAddr">--</span></span></div>
   <button class="row" type="button" data-sheet="sTech"><span class="ic off" id="icTech"><svg class="i"><use href="#i-chip"/></svg></span><span class="tx"><span class="t">Thông tin kỹ thuật</span><span class="d" id="dTech">Chip, bộ nhớ, sự cố gần nhất</span></span><span class="v"><svg class="i"><use href="#i-chev"/></svg></span></button>
@@ -842,7 +842,7 @@ const kb=v=>Math.round(v/1024)+' KB',dur=x=>{const d=Math.floor(x/86400),h=Math.
 async function sys(){try{SY=await j('/api/sys')}catch(e){return}const s=SY;
  $('dWifi').textContent=(s.ssid||'--')+' · '+(s.rssi>-60?'sóng tốt':s.rssi>-75?'sóng vừa':'sóng yếu')+' ('+s.rssi+' dBm)';$('dAddr').textContent=(s.mdns||'')+(s.mdns?' · ':'')+(s.ip||'');
  $('dIr').textContent=!s.irOn?'Chưa bật hồng ngoại':s.irProto?'Đã học: '+s.irProto:'Chưa học: bấm remote gốc 1 lần';$('bIr').hidden=!s.irOn||!!s.irProto;
- $('dSens').textContent=s.bleAgo<0?'Chưa nhận được tín hiệu':'Tín hiệu '+(s.bleAgo<90?'vừa nhận':Math.round(s.bleAgo/60)+' phút trước')+(S.batt>=0?' · pin '+S.batt+'%':'');
+ $('tSens').textContent='Nhiệt kế '+(s.sensor||'CGDK2');$('dSens').textContent=s.bleAgo<0?'Chưa nhận được tín hiệu':'Tín hiệu '+(s.bleAgo<90?'vừa nhận':Math.round(s.bleAgo/60)+' phút trước')+(S.batt>=0?' · pin '+S.batt+'%':'');
  const c=s.crash;$('dTech').textContent=s.safeMode?'Đang ở chế độ an toàn':c?'Có sự cố gần nhất: '+c.reason:'Chip, bộ nhớ, sự cố gần nhất';$('dTech').className='d'+(s.safeMode||c?' bad':'');
  $('icTech').className='ic'+(s.safeMode||c?' red':' off');cloudSt()}
 function tech(){const s=SY;if(!s){$('techKv').innerHTML='<p class="d">Không đọc được thông tin.</p>';$('techCrash').innerHTML='';return}
@@ -858,10 +858,10 @@ function tech(){const s=SY;if(!s){$('techKv').innerHTML='<p class="d">Không đ�
   ['Flash',s.flashMB+' MB · code '+kb(s.sketch)+' · trống '+kb(s.sketchFree)],['Bộ nhớ lưu',s.fsOk?kb(s.fsUsed)+' / '+kb(s.fsTotal):'Lỗi, chỉ lưu trong RAM'],
   ['Ngưỡng nhiệt','từ '+s.tempWarmC+'°C hạ CPU · từ '+s.tempHotC+'°C ngủ cho nguội'],['Số lần quá nhiệt',s.hotCount],
   ['WiFi',(s.ssid||'--')+' · kênh '+s.channel+' · '+s.rssi+' dBm'],['Số lần mất WiFi',s.wifiDrops],['MAC',s.mac],
-  ['Nhiệt kế CGDK2',s.blePackets+' gói · '+(s.bleAgo<0?'chưa có':s.bleAgo+' giây trước')],
+  ['Nhiệt kế '+(s.sensor||'CGDK2'),s.blePackets+(s.sensor=='SHT40'?' lần đọc':' gói')+' · '+(s.bleAgo<0?'chưa có':s.bleAgo+' giây trước')],
   ['Máy chủ MQTT',s.mqttHost||'--'],['MQTT',(s.mqttOk?'đã kết nối':'chưa kết nối')+' · '+s.mqttConnects+' lần kết nối · lệnh '+s.mqttReqOk+' hợp lệ / '+s.mqttReqBad+' bị từ chối'],
   ['Telegram',!s.tgOn?'chưa cài':'đã gửi '+s.tgSent+' · lỗi '+s.tgFail+(s.tgQueue?' · chờ '+s.tgQueue:'')+(s.tgErr?' · '+s.tgErr:'')],
-  ['Chip',s.chip+' · '+s.cpuMHz+' MHz'],['Bản firmware',s.build]];
+  ['Chip',s.chip+' · '+s.cpuMHz+' MHz'],['Bản firmware',(s.fw?s.fw+' · ':'')+s.build]];
  if(c)r.push(['Sự cố: tác vụ',c.task||'--'],['Sự cố: PC',c.pc||'--']);
  $('techKv').innerHTML=r.map(x=>row(x[0],x[1])).join('')}
 // ---- Tab ----
