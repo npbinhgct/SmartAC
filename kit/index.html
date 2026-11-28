@@ -288,7 +288,7 @@ input[type=text]{width:100%}
  </div>
  <div class="card list">
   <button class="row" type="button" data-sheet="sCool"><span class="ic"><svg class="i"><use href="#i-snow"/></svg></span><span class="tx"><span class="t">Làm mát</span><span class="d" id="dCool">--</span></span><span class="v"><span id="vCool">--</span><svg class="i"><use href="#i-chev"/></svg></span></button>
-  <button class="row" type="button" data-sheet="sDry"><span class="ic"><svg class="i"><use href="#i-drop"/></svg></span><span class="tx"><span class="t">Hút ẩm thông minh</span><span class="d">Phòng ẩm thì tự hút ẩm, đủ khô thì về làm lạnh</span></span><span class="v"><span id="vDry">--</span><svg class="i"><use href="#i-chev"/></svg></span></button>
+  <button class="row" type="button" data-sheet="sDry"><span class="ic"><svg class="i"><use href="#i-drop"/></svg></span><span class="tx"><span class="t">Hút ẩm thông minh</span><span class="d" id="dDry">Phòng ẩm thì tự hút ẩm, đủ khô thì về làm lạnh</span></span><span class="v"><span id="vDry">--</span><svg class="i"><use href="#i-chev"/></svg></span></button>
   <button class="row" type="button" data-sheet="sAway"><span class="ic" id="icAway"><svg class="i"><use href="#i-home"/></svg></span><span class="tx"><span class="t">Tự nhận biết khi ra khỏi nhà</span><span class="d" id="dAway">--</span></span><span class="v"><span id="vAway">--</span><svg class="i"><use href="#i-chev"/></svg></span></button>
   <button class="row" type="button" data-sheet="sMold"><span class="ic" id="icMold"><svg class="i"><use href="#i-fan"/></svg></span><span class="tx"><span class="t">Chống nấm mốc</span><span class="d">Chạy quạt cho khô dàn lạnh trước khi tắt</span></span><span class="v"><span id="vMold">--</span><svg class="i"><use href="#i-chev"/></svg></span></button>
  </div>
@@ -581,7 +581,7 @@ function stepper(id,v,mn,mx,st,fmt){const el=$(id);el.dataset.v=v;const show=()=
  $(id+'+').onclick=()=>{el.dataset.v=Math.min(mx,Math.round((+el.dataset.v+st)*10)/10);show()}}
 const sgn=(v,u)=>(v>0?'+':'')+String(v).replace('.',',')+u;
 const dayTxt=w=>w==127?'Hằng ngày':w==62?'T2 – T6':w==65?'T7, CN':DAYS.filter(([b])=>w>>b&1).map(d=>d[1]).join(', ')||'Không ngày nào';
-const dryLevel=()=>{if(!C.dryByDew)return null;const x=DRY.find(d=>d[3]==C.dewOn&&d[4]==C.dewOff);return x?x[0]:null};
+const dryLevel=()=>{if(!C.dryByDew||C.dryCus)return null;const x=DRY.find(d=>d[3]==C.dewOn&&d[4]==C.dewOff);return x?x[0]:null};
 // ---- Mở pop-up: điền giá trị hiện tại ----
 let M=null;
 // ---- Tự nhận biết ra / vào nhà ----
@@ -641,7 +641,7 @@ const OPEN={
  sCool:()=>{stepper('cT',C.coolTemp,16,30,1,v=>v+'°C');pills($('cFan'),fanList('cool',C.coolFan),C.coolFan||'');
   stepper('b1',C.boostT1,.5,3,.1,deg);stepper('b2',C.boostT2,1,5,.1,deg)},
 
- sDry:()=>{const l=dryLevel()||'cus';const L=DRY.map(d=>[d[0],d[1],d[2]]).concat([['cus','Tùy chỉnh','Tự đặt ngưỡng điểm sương']]);
+ sDry:()=>{const l=dryLevel()||'cus';const L=DRY.map(d=>[d[0],d[1],d[2]+'. Hút ẩm khi điểm sương từ '+d[3]+'°C, về làm lạnh từ '+d[4]+'°C']).concat([['cus','Tùy chỉnh','Tự đặt ngưỡng điểm sương']]);
   const show=v=>{$('dryOpts').dataset.v=v;$('dryCus').hidden=v!='cus'};opts($('dryOpts'),L,l,show);show(l);
   stepper('dwOn',C.dewOn,15,26,1,v=>v+'°C');stepper('dwOff',C.dewOff,12,25,1,v=>v+'°C');pills($('dFan'),fanList('dry',C.dryFan),C.dryFan||'')},
 
@@ -683,8 +683,8 @@ const SAVE={
  sCool:s=>{const b1=+$('b1').dataset.v,b2=+$('b2').dataset.v;if(b2<=b1){s.querySelector('.msg').textContent='Mức quạt Cao phải lớn hơn mức quạt Vừa';return}
   save({coolTemp:+$('cT').dataset.v,coolFan:$('cFan').dataset.v,boostT1:b1,boostT2:b2},s)},
  sDry:s=>{const v=$('dryOpts').dataset.v,fan=$('dFan').dataset.v;
-  if(v=='cus'){const a=+$('dwOn').dataset.v,b=+$('dwOff').dataset.v;if(b>=a){s.querySelector('.msg').textContent='Ngưỡng về làm lạnh phải thấp hơn ngưỡng hút ẩm';return}save({dryByDew:true,dewOn:a,dewOff:b,dryFan:fan},s);return}
-  const d=DRY.find(x=>x[0]==v);save({dryByDew:true,dewOn:d[3],dewOff:d[4],dryFan:fan},s)},
+  if(v=='cus'){const a=+$('dwOn').dataset.v,b=+$('dwOff').dataset.v;if(b>=a){s.querySelector('.msg').textContent='Ngưỡng về làm lạnh phải thấp hơn ngưỡng hút ẩm';return}save({dryByDew:true,dryCus:true,dewOn:a,dewOff:b,dryFan:fan},s);return}
+  const d=DRY.find(x=>x[0]==v);save({dryByDew:true,dryCus:false,dewOn:d[3],dewOff:d[4],dryFan:fan},s)},
  sAway:async s=>{try{const r=await post('/api/presence',{on:$('aOn').checked,after:+$('aAfter').dataset.v});if(!r.ok)throw 0;P=await r.json()}catch(e){s.querySelector('.msg').textContent='Chưa lưu được: mất kết nối';return}
  save({awayMode:+$('awayOpts').dataset.v,awayTemp:+$('aT').dataset.v},s)},
  sMold:s=>save({moldOn:$('mOn').checked,moldMin:+$('mMin').dataset.v},s),
@@ -746,7 +746,8 @@ $('irTest').onclick=async()=>{toast('Đang phát…',0);try{const r=await post('
 function fill(){if(C.autoOn==null)return;
  $('qAuto').checked=C.autoOn;$('qSleep').checked=C.sleepOn;
  $('vCool').textContent=C.coolTemp+'°C';$('dCool').textContent='Giữ '+C.coolTemp+'°C · quạt '+(FANS[C.coolFan]||'giữ nguyên')+' · tăng quạt khi nóng hơn '+deg(C.boostT1).replace('C','')+' / '+deg(C.boostT2).replace('C','');
- const l=dryLevel();$('vDry').textContent=l?DRY.find(d=>d[0]==l)[1]:'Riêng';
+ const l=dryLevel();$('vDry').textContent=l?DRY.find(d=>d[0]==l)[1]:'Tùy chỉnh';
+ if(C.dryByDew)$('dDry').textContent='Hút ẩm khi điểm sương từ '+C.dewOn+'°C, về làm lạnh từ '+C.dewOff+'°C';
  const am=+C.awayMode;$('vAway').textContent=!C.autoAway?'Tắt':C.away?'Không ai ở nhà':'Có người';$('vAway').parentNode.className='v'+(C.autoAway&&C.away?' org':'');
  $('dAway').textContent='Khi không ai ở nhà: '+(am==2?'chạy tiết kiệm '+C.awayTemp+'°C':am==1?'chỉ hút ẩm khi quá ẩm':'tắt máy');$('icAway').className='ic'+(C.autoAway?'':' off');
  $('vMold').textContent=C.moldOn?C.moldMin+' phút':'Tắt';$('icMold').className='ic'+(C.moldOn?'':' off');
